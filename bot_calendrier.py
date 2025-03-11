@@ -59,21 +59,30 @@ async def send_daily_calendar():
         # Définir une festivité (Exemple statique, peut être dynamique)
         festivite = "Aucune"  # Mettre le vrai nom si une festivité a lieu aujourd’hui
 
-        # Générer les jours du mois avec highlight du jour actuel
+        # Générer les jours du mois avec mise en crochets du jour actuel et alignement parfait
         jours_mois = []
         for i in range(1, 33):  # Boucle de 1 à 32 (jours du mois)
-            jour_str = f"{i:2}"  # Conserve l'alignement (chaque jour fait 2 caractères)
-            if i == jour_mois:
-                jour_str = f" *{jour_str}*"  # Met en gras le jour actuel
-            jours_mois.append(jour_str)
+            jour_str = f"{i:2}"  # Garde les nombres à 2 caractères
 
-        # Construction du calendrier sous forme de colonnes
-        calendrier_texte = " | ".join(jours_abbr) + "\n"
-        calendrier_texte += "-" * len(calendrier_texte) + "\n"
+        if i == jour_mois:
+            jour_str = f"[{jour_str.strip()}]"  # Met en crochets le jour actuel
 
-        for i in range(0, len(jours_mois), 8):  # Groupe les jours par semaines de 8 jours
-            semaine = " | ".join(jours_mois[i:i+8])
-            calendrier_texte += semaine + "\n"
+        jours_mois.append(jour_str)
+
+    # Espacement correct pour aligner les chiffres sous les jours
+    jours_abbr = ["Tel", "Sil", "Vae", "Nyt", "Zor", "Lum", "Kae", "Eld"]
+
+    # Calcul de l'alignement des jours
+    jours_abbr_str = "   ".join(jours_abbr)  # Espacement fixe pour bien aligner
+    ligne_separation = "─" * len(jours_abbr_str)  # Séparateur aligné
+
+    # Construction du calendrier avec un alignement parfait
+    calendrier_texte = jours_abbr_str + "\n"
+    calendrier_texte += ligne_separation + "\n"
+
+for i in range(0, len(jours_mois), 8):  # Groupe par semaines de 8 jours
+    semaine = "   ".join(jours_mois[i:i+8])
+    calendrier_texte += semaine + "\n"
 
         # Création de l'embed avec l'ordre exact demandé
         embed = discord.Embed(
