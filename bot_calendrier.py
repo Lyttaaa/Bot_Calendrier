@@ -3,6 +3,7 @@ import discord
 from discord.ext import tasks, commands
 import datetime
 import random
+import pytz
 
 # Vérification de l'heure système
 print(f"🕒 [DEBUG] Heure système Railway : {datetime.datetime.now()}")
@@ -132,7 +133,7 @@ async def send_daily_calendar():
             print(f"❌ [DEBUG] Erreur : Channel introuvable avec l'ID {CHANNEL_ID}.")
     else:
         print(f"⌛ [DEBUG] Il est {now_local.strftime('%H:%M:%S')}, attente de l'heure exacte...")
-
+        
 async def send_calendar_message(channel):
     """ Génère et envoie le message du calendrier """
     mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
