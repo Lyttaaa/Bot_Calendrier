@@ -5,11 +5,11 @@ import datetime
 import random
 
 TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'environnement
-CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
+CHANNEL_ID = 123456789012345678  # Remplace avec l'ID de ton canal Discord
 
-# 🔴 DÉFINIS L'HEURE À LAQUELLE LE MESSAGE SERA ENVOYÉ
+# 🔴 Définition de l'heure d'envoi du message
 POST_HOUR = 12  # Heure en format 24h (ex: 8 = 08h00)
-POST_MINUTE = 3  # Minute exacte (ex: 30 = 08h30)
+POST_MINUTE = 6  # Minute exacte (ex: 30 = 08h30)
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -27,7 +27,7 @@ mois_noms = [
 phases_astraelis = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
 phases_vorna = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
 
-# Message immersif
+# Messages immersifs
 messages_accueil = [
     "✨ Que les vents de Lumharel vous soient favorables !",
     "🌙 Que la lumière des lunes vous guide en cette journée !",
@@ -50,7 +50,8 @@ festivites = {
 @bot.event
 async def on_ready():
     print(f"✅ {bot.user} est connecté et actif !")
-    send_daily_calendar.start()
+    if not send_daily_calendar.is_running():
+        send_daily_calendar.start()
 
 def get_lumharel_date():
     """ Calcule la date dans le calendrier de Lumharel et les festivités associées """
@@ -90,9 +91,9 @@ def generer_calendrier(mois, jour_mois):
 
     return calendrier_texte
 
-@bot.command(name="calendrier")
-async def calendrier(ctx):
-    """ Commande pour afficher la date et le calendrier en temps réel """
+@tasks.loop(time=datetime.time(POST_HOUR, POST_MINUTE))
+async def send_daily_calendar():
+    """ Envoie le calendrier chaque jour à l'heure définie """
     mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
     calendrier = generer_calendrier(mois, jour_mois)
     message_immersion = random.choice(messages_accueil)
@@ -110,6 +111,10 @@ async def calendrier(ctx):
     embed.add_field(name="📆 Mois en cours", value=f"```\n{calendrier}```", inline=False)
     embed.add_field(name="📅 Voir le calendrier complet", value="[🔗 Cliquez ici](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)", inline=False)
 
-    await ctx.send(embed=embed)
+    channel = bot.get_channel(CHANNEL_ID)
+    if channel:
+        await channel.send(embed=embed)
+    else:
+        print("❌ Erreur : Channel introuvable ! Vérifie l'ID du canal.")
 
 bot.run(TOKEN)
