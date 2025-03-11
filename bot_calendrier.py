@@ -8,7 +8,7 @@ TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'env
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
 POST_HOUR = 14  # Heure en 24h (ex: 8 = 08h00 du matin)
-POST_MINUTE = 33  # Minute exacte de l'envoi
+POST_MINUTE = 40  # Minute exacte de l'envoi
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -84,23 +84,22 @@ def generate_calendar(mois_nom, jour_mois):
 
     return calendrier
 
-@bot.event
-async def on_ready():
-    print(f"✅ {bot.user} est connecté et actif !")
-    print(f"📌 Commandes enregistrées : {[command.name for command in bot.commands]}")
+@tasks.loop(seconds=60)  # Vérifie toutes les minutes
+async def send_daily_calendar():
+    """ Vérifie l'heure chaque minute et envoie le calendrier si nécessaire """
+    now = datetime.datetime.now()
     
-    channel = bot.get_channel(CHANNEL_ID)
-    if channel:
-        print(f"📨 Channel trouvé : {channel.name} (ID: {CHANNEL_ID})")
+    # Vérifie si l'heure actuelle correspond à l'heure d'envoi planifiée
+    if now.hour == POST_HOUR and now.minute == POST_MINUTE:
+        print(f"📨 Envoi du message automatique à {now.strftime('%H:%M')}...")
+        
+        channel = bot.get_channel(CHANNEL_ID)
+        if channel:
+            await send_calendar_message(channel)
+        else:
+            print(f"❌ Erreur : Channel introuvable avec l'ID {CHANNEL_ID}. Vérifie l'ID du canal dans le script !")
     else:
-        print("❌ Erreur : Impossible de trouver le channel. Vérifie l'ID dans ton script !")
-
-    # Vérification et démarrage de la tâche planifiée
-    if not send_daily_calendar.is_running():
-        send_daily_calendar.start()
-        print(f"⏰ Envoi automatique du calendrier activé pour {POST_HOUR:02d}:{POST_MINUTE:02d} chaque jour.")
-    else:
-        print("⚠️ La tâche d'envoi est déjà en cours.")
+        print(f"⏳ Vérification de l'heure... Il est {now.strftime('%H:%M')}, envoi prévu à {POST_HOUR:02d}:{POST_MINUTE:02d}")
         
 async def on_ready():
     print(f"✅ {bot.user} est connecté et actif !")
@@ -116,18 +115,22 @@ async def calendrier(ctx):
     """ Affiche la date et le calendrier en temps réel """
     await send_calendar_message(ctx.channel)
 
-@tasks.loop(time=datetime.time(POST_HOUR, POST_MINUTE))
+@tasks.loop(seconds=60)  # Vérifie toutes les minutes
 async def send_daily_calendar():
-    """ Vérifie et envoie automatiquement le calendrier chaque jour """
-    print(f"⏳ Vérification de l'heure... Il est {datetime.datetime.now().strftime('%H:%M')}, l'envoi est prévu à {POST_HOUR:02d}:{POST_MINUTE:02d}")
-
-    channel = bot.get_channel(CHANNEL_ID)
+    """ Vérifie l'heure chaque minute et envoie le calendrier si nécessaire """
+    now = datetime.datetime.now()
     
-    if channel:
-        print(f"📨 Envoi du message automatique dans {channel.name} (ID: {CHANNEL_ID})...")
-        await send_calendar_message(channel)
+    # Vérifie si l'heure actuelle correspond à l'heure d'envoi planifiée
+    if now.hour == POST_HOUR and now.minute == POST_MINUTE:
+        print(f"📨 Envoi du message automatique à {now.strftime('%H:%M')}...")
+        
+        channel = bot.get_channel(CHANNEL_ID)
+        if channel:
+            await send_calendar_message(channel)
+        else:
+            print(f"❌ Erreur : Channel introuvable avec l'ID {CHANNEL_ID}. Vérifie l'ID du canal dans le script !")
     else:
-        print(f"❌ Erreur : Channel introuvable avec l'ID {CHANNEL_ID}. Vérifie l'ID du canal dans le script !")
+        print(f"⏳ Vérification de l'heure... Il est {now.strftime('%H:%M')}, envoi prévu à {POST_HOUR:02d}:{POST_MINUTE:02d}")
         
 async def send_calendar_message(channel):
     """ Génère et envoie le message du calendrier """
