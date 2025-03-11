@@ -45,7 +45,10 @@ bot.run(TOKEN)
 
 # Fichier requirements.txt
 requirements_txt = """discord.py
-python-dotenv"""
+python-dotenv*
+discord.py
+matplotlib
+pillow"""
 
 # Fichier service.json
 service_json = """{
