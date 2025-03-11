@@ -15,6 +15,11 @@ TOKEN = os.getenv("TOKEN")  # Récupération du token depuis Railway
 intents = discord.Intents.default()
 intents.message_content = True  # Active la lecture des messages pour les commandes
 
+intents = discord.Intents.default()
+intents.message_content = True  # Nécessaire pour lire les messages
+intents.presences = True  # Facultatif, mais peut être utile
+intents.members = True  # Facultatif pour gérer les membres
+
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Jours et mois de Lumharel
