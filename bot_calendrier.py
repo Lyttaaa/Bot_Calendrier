@@ -63,7 +63,7 @@ def get_lumharel_date():
 
 def generate_calendar(mois_nom, jour_mois):
     """ Génère la mise en forme du calendrier avec plus d’espace entre les colonnes """
-    calendrier = "**Calendrier du mois :**\n\n"
+    calendrier = "\n\n"
 
     # En-tête avec les jours de la semaine alignés avec plus d'espace
     calendrier += "   ".join([f"{abbr:^4}" for abbr in jours_abbr]) + "\n"
