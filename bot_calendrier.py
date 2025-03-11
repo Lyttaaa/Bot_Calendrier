@@ -29,8 +29,12 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     print(f'✅ {bot.user} est connecté !')
-    send_daily_calendar.start()  # Démarrer la tâche automatique
-    print("🔄 Tâche automatique démarrée avec succès !")
+
+    if not send_daily_calendar.is_running():
+        send_daily_calendar.start()
+        print("🔄 Tâche automatique démarrée avec succès !")  # Debug
+    else:
+        print("⚠️ La tâche automatique était déjà en cours !")
 
     # Test immédiat
     await send_daily_calendar()
