@@ -62,20 +62,20 @@ def get_lumharel_date():
     return mois_nom, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite_du_jour, date_actuelle
 
 def generate_calendar(mois_nom, jour_mois):
-    """ Génère la mise en forme du calendrier """
-    calendrier = "\n"
+    """ Génère la mise en forme du calendrier avec plus d’espace entre les colonnes """
+    calendrier = "**Calendrier du mois :**\n\n"
 
-    # En-tête avec les jours de la semaine alignés
-    calendrier += " ".join([f"{abbr:^3}" for abbr in jours_abbr]) + "\n"
-    calendrier += "-" * 32 + "\n"
+    # En-tête avec les jours de la semaine alignés avec plus d'espace
+    calendrier += "   ".join([f"{abbr:^4}" for abbr in jours_abbr]) + "\n"
+    calendrier += "-" * 48 + "\n"
 
     # Générer les jours du mois
     ligne = ""
     for i in range(1, 33):
         if i == jour_mois:
-            ligne += f"[{i:2}]"  # Encadrer le jour actuel avec []
+            ligne += f"[{i:2}]   "  # Mettre le jour actuel entre []
         else:
-            ligne += f" {i:2} "
+            ligne += f" {i:2}    "
 
         # Retour à la ligne après chaque semaine de 8 jours
         if i % 8 == 0:
@@ -126,7 +126,7 @@ async def send_calendar_message(channel):
     embed.add_field(name="🎉 Festivité du jour", value=f"**{festivite}**", inline=True)
     embed.add_field(name="🌙 Phases lunaires", value=f"Astraelis : {phase_astraelis}\nVörna : {phase_vorna}", inline=True)
 
-    embed.add_field(name="🗓️ Mois en cours", value=f"```\n{calendrier_formatte}\n```", inline=False)
+    embed.add_field(name="🗓️ Calendrier du mois", value=f"```\n{calendrier_formatte}\n```", inline=False)
 
     embed.add_field(name="📅 Voir le calendrier complet", value="[🔗 Cliquez ici](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)", inline=False)
 
