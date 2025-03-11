@@ -8,7 +8,7 @@ TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'env
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
 POST_HOUR = 14  # Heure en 24h (ex: 8 = 08h00 du matin)
-POST_MINUTE = 25  # Minute exacte de l'envoi
+POST_MINUTE = 27  # Minute exacte de l'envoi
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -100,6 +100,7 @@ async def on_ready():
     if not send_daily_calendar.is_running():
         send_daily_calendar.start()
         print("⏰ Envoi automatique du calendrier activé !")
+        
 async def on_ready():
     print(f"✅ {bot.user} est connecté et actif !")
     print(f"📌 Commandes enregistrées : {[command.name for command in bot.commands]}")
@@ -116,7 +117,7 @@ async def calendrier(ctx):
 
 @tasks.loop(time=datetime.time(POST_HOUR, POST_MINUTE))
 async def send_daily_calendar():
-    """ Vérifie et envoie automatiquement le calendrier chaque jour """
+    """ Envoie automatiquement le calendrier chaque jour à l'heure définie """
     print(f"⏳ Vérification de l'heure... Envoi prévu à {POST_HOUR:02d}:{POST_MINUTE:02d}")
     
     channel = bot.get_channel(CHANNEL_ID)
@@ -126,7 +127,7 @@ async def send_daily_calendar():
         await send_calendar_message(channel)
     else:
         print(f"❌ Erreur : Channel introuvable avec l'ID {CHANNEL_ID}. Vérifie l'ID du canal dans le script !")
-
+        
 async def send_calendar_message(channel):
     """ Génère et envoie le message du calendrier """
     mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
