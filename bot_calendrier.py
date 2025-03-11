@@ -7,25 +7,19 @@ import random
 TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'environnement
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
-# 🔴 Définition de l'heure d'envoi du message automatique
-POST_HOUR = 8  # Heure en format 24h (ex: 8 = 08h00)
-POST_MINUTE = 0  # Minute exacte (ex: 30 = 08h30)
+POST_HOUR = 8  # Heure d'envoi du message automatique
+POST_MINUTE = 0
 
-# 🔥 Activer les intents pour lire les messages et exécuter les commandes
 intents = discord.Intents.default()
-intents.message_content = True  # Permet au bot de lire les messages
+intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Définition des noms des jours et des mois
+# Jours et mois du calendrier de Lumharel
 jours_complet = ["Tellion", "Sildrien", "Vaeldris", "Nythariel", "Zorvael", "Luméon", "Kaelios", "Eldrith"]
 jours_abbr = ["Tel", "Sil", "Vae", "Nyt", "Zor", "Lum", "Kae", "Eld"]
-mois_noms = [
-    "Orréa", "Thiloris", "Vækirn", "Dornis", "Solvannar",
-    "Velkaris", "Nytheris", "Varneth", "Elthiris", "Zorvahl",
-    "Draknar", "Umbraël", "Aëldrin", "Kaelthor", "Eldros"
-]
+mois_noms = ["Orréa", "Thiloris", "Vækirn", "Dornis", "Solvannar", "Velkaris", "Nytheris", "Varneth", "Elthiris", "Zorvahl", "Draknar", "Umbraël", "Aëldrin", "Kaelthor", "Eldros"]
 
-# Définition des phases des lunes
+# Phases des lunes
 phases_astraelis = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
 phases_vorna = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
 
@@ -37,7 +31,7 @@ messages_accueil = [
     "🌿 Que les murmures des anciens Façonneurs vous inspirent aujourd’hui !"
 ]
 
-# Liste dynamique des festivités
+# Liste des festivités fixes
 festivites = {
     (1, "Orréa"): "Solstice du Grand Réveil",
     (15, "Vækirn"): "Festival des Flammes",
@@ -52,10 +46,7 @@ festivites = {
 @bot.event
 async def on_ready():
     print(f"✅ {bot.user} est connecté et actif !")
-    
-    # Vérifier l'enregistrement des commandes
     print(f"📌 Commandes enregistrées : {[command.name for command in bot.commands]}")
-
     if not send_daily_calendar.is_running():
         send_daily_calendar.start()
 
@@ -73,19 +64,17 @@ def get_lumharel_date():
     phase_vorna = phases_vorna[jour_annee % len(phases_vorna)]
 
     mois_nom = mois_noms[mois_index]
-
-    # Vérification des festivités fixes
     festivite_du_jour = festivites.get((jour_mois, mois_nom), "Aucune")
 
     return mois_nom, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite_du_jour, date_actuelle
 
 def generer_calendrier(mois, jour_mois):
-    """ Génère le calendrier du mois en cours avec le jour actuel en crochets """
+    """ Génère le calendrier avec les jours bien alignés """
     jours_mois = []
     for i in range(1, 33):
         jour_str = f"{i:2}"
         if i == jour_mois:
-            jour_str = f"[{jour_str.strip()}]"
+            jour_str = f"[{jour_str.strip()}]"  # Mise en surbrillance du jour en cours
         jours_mois.append(jour_str)
 
     jours_abbr_str = "  ".join(jours_abbr)
@@ -99,7 +88,7 @@ def generer_calendrier(mois, jour_mois):
 
 @tasks.loop(time=datetime.time(POST_HOUR, POST_MINUTE))
 async def send_daily_calendar():
-    """ Envoie le calendrier chaque jour à l'heure définie """
+    """ Envoie le calendrier chaque jour avec les modifications demandées """
     mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
     calendrier = generer_calendrier(mois, jour_mois)
     message_immersion = random.choice(messages_accueil)
@@ -112,8 +101,13 @@ async def send_daily_calendar():
         color=0xFFD700
     )
 
-    embed.add_field(name="🎉 Festivité du jour", value=f"{festivite}", inline=False)
-    embed.add_field(name="🌙 Phases lunaires", value=f"Astraelis : {phase_astraelis} | Vörna : {phase_vorna}", inline=False)
+    # Festivités et phases lunaires sur une seule ligne
+    embed.add_field(
+        name="🎉 Festivité et 🌙 Phases lunaires",
+        value=f"**{festivite}** | Astraelis : {phase_astraelis} | Vörna : {phase_vorna}",
+        inline=False
+    )
+
     embed.add_field(name="📆 Mois en cours", value=f"```\n{calendrier}```", inline=False)
     embed.add_field(name="📅 Voir le calendrier complet", value="[🔗 Cliquez ici](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)", inline=False)
 
