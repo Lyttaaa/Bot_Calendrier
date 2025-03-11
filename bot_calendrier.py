@@ -26,38 +26,31 @@ intents.members = True  # Facultatif pour gérer les membres
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-@bot.event
-async def on_ready():
-    print(f'✅ {bot.user} est connecté !')
+CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID du salon où poster le message
 
-    if not send_daily_calendar.is_running():
-        send_daily_calendar.start()
-        print("🔄 Tâche automatique démarrée avec succès !")  # Debug
-        
-    await send_daily_calendar()  # 💡 Test immédiat !
-    
-    else:
-        print("⚠️ La tâche automatique était déjà en cours !")
-
-    # Test immédiat
-    await send_daily_calendar()
-async def on_ready():
-    print(f'✅ {bot.user} est connecté !')
-    send_daily_calendar.start()  # Démarrer la tâche automatique
-    
+# ✅ **1. DÉFINIR D'ABORD la fonction d'envoi automatique**
 @tasks.loop(hours=24)
 async def send_daily_calendar():
     """Envoie automatiquement le message du calendrier chaque jour"""
     print("⏳ Tentative d'envoi du calendrier...")
-    
+
     channel = bot.get_channel(CHANNEL_ID)
     if channel:
         print(f"📢 Message envoyé dans : {channel.name}")  # Debug
         await channel.send(embed=generate_calendar_embed())
     else:
         print("❌ Erreur : Le bot ne trouve pas le salon ! Vérifie l'ID du salon.")
-CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID du salon où poster le message
 
+# ✅ **2. ENSUITE, DÉFINIR on_ready()**
+@bot.event
+async def on_ready():
+    print(f'✅ {bot.user} est connecté !')
+
+    if not send_daily_calendar.is_running():
+        send_daily_calendar.start()
+        print("🔄 Tâche automatique démarrée avec succès !")
+    else:
+        print("⚠️ La tâche automatique était déjà en cours !")
 # Jours et mois de Lumharel
 jours = ["Tel", "Sil", "Vae", "Nyt", "Zor", "Lum", "Kae", "Eld"]
 mois = [
