@@ -5,11 +5,11 @@ import datetime
 import random
 
 TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'environnement
-CHANNEL_ID = 123456789012345678  # Remplace avec l'ID de ton canal Discord
+CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
 # 🔴 Définition de l'heure d'envoi du message
 POST_HOUR = 12  # Heure en format 24h (ex: 8 = 08h00)
-POST_MINUTE = 6  # Minute exacte (ex: 30 = 08h30)
+POST_MINUTE = 8  # Minute exacte (ex: 30 = 08h30)
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
