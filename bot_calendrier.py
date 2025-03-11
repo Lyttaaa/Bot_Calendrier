@@ -5,7 +5,7 @@ import random
 
 # Configuration du bot
 TOKEN = "TON_TOKEN_DISCORD"
-CHANNEL_ID = 123456789012345678  # Remplace avec l'ID de ton salon
+CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton salon
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
