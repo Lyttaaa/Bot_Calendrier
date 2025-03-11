@@ -16,7 +16,6 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Jours et mois du calendrier de Lumharel
 jours_complet = ["Tellion", "Sildrien", "Vaeldris", "Nythariel", "Zorvael", "Luméon", "Kaelios", "Eldrith"]
-jours_abbr = ["Tel", "Sil", "Vae", "Nyt", "Zor", "Lum", "Kae", "Eld"]
 mois_noms = ["Orréa", "Thiloris", "Vækirn", "Dornis", "Solvannar", "Velkaris", "Nytheris", "Varneth", "Elthiris", "Zorvahl", "Draknar", "Umbraël", "Aëldrin", "Kaelthor", "Eldros"]
 
 # Phases des lunes
@@ -71,11 +70,10 @@ async def on_ready():
 @bot.command(name="calendrier")
 async def calendrier(ctx):
     """ Affiche la date et le calendrier en temps réel """
-    await send_daily_calendar.invoke(ctx)
+    await send_calendar_message(ctx.channel)
 
-@tasks.loop(time=datetime.time(POST_HOUR, POST_MINUTE))
-async def send_daily_calendar():
-    """ Envoie le calendrier chaque jour """
+async def send_calendar_message(channel):
+    """ Génère et envoie le message du calendrier """
     mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
     message_immersion = random.choice(messages_accueil)
 
@@ -92,10 +90,15 @@ async def send_daily_calendar():
 
     embed.add_field(name="📅 Voir le calendrier complet", value="[🔗 Cliquez ici](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)", inline=False)
 
-    channel = bot.get_channel(CHANNEL_ID)
     if channel:
         await channel.send(embed=embed)
     else:
         print("❌ Erreur : Channel introuvable ! Vérifie l'ID du canal.")
+
+@tasks.loop(time=datetime.time(POST_HOUR, POST_MINUTE))
+async def send_daily_calendar():
+    """ Envoie automatiquement le calendrier chaque jour """
+    channel = bot.get_channel(CHANNEL_ID)
+    await send_calendar_message(channel)
 
 bot.run(TOKEN)
