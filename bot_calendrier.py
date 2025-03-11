@@ -48,7 +48,7 @@ async def on_ready():
 
     if not send_daily_calendar.is_running():
         send_daily_calendar.start()
-        print("🔄 Tâche automatique démarrée avec succès !")
+        print("🔄 Tâche automatique démarrée avec succès !")  # Debug
     else:
         print("⚠️ La tâche automatique était déjà en cours !")
 # Jours et mois de Lumharel
