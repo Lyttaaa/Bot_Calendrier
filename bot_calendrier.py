@@ -7,8 +7,8 @@ import random
 TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'environnement
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
-POST_HOUR = 8  # Heure d'envoi du message automatique
-POST_MINUTE = 0
+POST_HOUR = 12  # Heure d'envoi du message automatique
+POST_MINUTE = 46
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -69,26 +69,28 @@ def get_lumharel_date():
     return mois_nom, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite_du_jour, date_actuelle
 
 def generer_calendrier(mois, jour_mois):
-    """ Génère le calendrier avec les jours bien alignés """
+    """ Génère le calendrier avec alignement corrigé """
+    
+    # Espacement pour garder les colonnes alignées
+    jours_abbr_str = " ".join(f"{abbr:^5}" for abbr in jours_abbr)  # Centrage pour aligner les colonnes
+    ligne_separation = "─" * len(jours_abbr_str)
+
     jours_mois = []
     for i in range(1, 33):
         jour_str = f"{i:2}"
         if i == jour_mois:
             jour_str = f"[{jour_str.strip()}]"  # Mise en surbrillance du jour en cours
-        jours_mois.append(jour_str)
-
-    jours_abbr_str = "  ".join(jours_abbr)
-    ligne_separation = "─" * len(jours_abbr_str)
+        jours_mois.append(f"{jour_str:^5}")  # Centrage pour aligner les chiffres
 
     calendrier_texte = f"{jours_abbr_str}\n{ligne_separation}\n"
     for i in range(0, len(jours_mois), 8):
-        calendrier_texte += "  ".join(jours_mois[i:i+8]) + "\n"
+        calendrier_texte += " ".join(jours_mois[i:i+8]) + "\n"
 
     return calendrier_texte
 
 @tasks.loop(time=datetime.time(POST_HOUR, POST_MINUTE))
 async def send_daily_calendar():
-    """ Envoie le calendrier chaque jour avec les modifications demandées """
+    """ Envoie le calendrier chaque jour avec les corrections demandées """
     mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
     calendrier = generer_calendrier(mois, jour_mois)
     message_immersion = random.choice(messages_accueil)
