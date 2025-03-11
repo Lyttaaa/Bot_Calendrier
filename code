@@ -49,8 +49,9 @@ requirements_txt = """discord.py"""
 # Fichier service.json
 service_json = """{
   "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "pip install -r requirements.txt"
+    "env": {
+      "PYTHON_VERSION": "3.9"
+    }
   },
-  "start": "python bot_calendrier.py"
+  "start": "python3 bot_calendrier.py"
 }"""
