@@ -44,7 +44,8 @@ async def calendrierlien(ctx):
 bot.run(TOKEN)
 
 # Fichier requirements.txt
-requirements_txt = """discord.py"""
+requirements_txt = """discord.py
+python-dotenv"""
 
 # Fichier service.json
 service_json = """{
