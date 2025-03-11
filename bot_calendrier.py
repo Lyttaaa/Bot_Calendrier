@@ -8,7 +8,7 @@ TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'env
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
 POST_HOUR = 14  # Heure en 24h (ex: 8 = 08h00 du matin)
-POST_MINUTE = 20  # Minute exacte de l'envoi
+POST_MINUTE = 25  # Minute exacte de l'envoi
 
 intents = discord.Intents.default()
 intents.message_content = True
