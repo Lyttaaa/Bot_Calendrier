@@ -64,7 +64,7 @@ async def send_daily_calendar():
         for i in range(1, 33):  # Boucle de 1 à 32 jours du mois
             jour_str = f"{i:2}"  # Garde l'alignement
             if i == jour_mois:
-                jour_str = f"[{jour_str}]"  # Met en gras le jour actuel
+                jour_str = f"\033[31m{jour_str}\033[0m"  # Rouge
             jours_mois.append(jour_str)
 
         # Construction du calendrier sous forme de colonnes
