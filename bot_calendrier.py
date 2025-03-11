@@ -5,7 +5,7 @@ import datetime
 import random
 
 TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'environnement
-CHANNEL_ID = 123456789012345678  # Remplace avec l'ID de ton canal Discord
+CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
 POST_HOUR = 8  # Heure d'envoi du message automatique
 POST_MINUTE = 0
@@ -64,19 +64,19 @@ def get_lumharel_date():
 def generate_calendar(mois_nom, jour_mois):
     """ Génère la mise en forme du calendrier """
     calendrier = "**Calendrier du mois :**\n"
-    
-    # En-tête avec les jours de la semaine
-    calendrier += " | ".join(jours_abbr) + "\n"
-    calendrier += "-" * 48 + "\n"
+
+    # En-tête avec les jours de la semaine alignés
+    calendrier += " ".join([f"{abbr:^3}" for abbr in jours_abbr]) + "\n"
+    calendrier += "-" * 32 + "\n"
 
     # Générer les jours du mois
     ligne = ""
     for i in range(1, 33):
         if i == jour_mois:
-            ligne += f"**[{i:2}]** | "  # Mettre en gras le jour actuel
+            ligne += f"[{i:2}]"  # Encadrer le jour actuel avec []
         else:
-            ligne += f" {i:2} | "
-        
+            ligne += f" {i:2} "
+
         # Retour à la ligne après chaque semaine de 8 jours
         if i % 8 == 0:
             calendrier += ligne.rstrip() + "\n"
