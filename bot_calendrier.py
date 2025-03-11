@@ -25,7 +25,15 @@ intents.presences = True  # Facultatif, mais peut être utile
 intents.members = True  # Facultatif pour gérer les membres
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+
 @bot.event
+async def on_ready():
+    print(f'✅ {bot.user} est connecté !')
+    send_daily_calendar.start()  # Démarrer la tâche automatique
+    print("🔄 Tâche automatique démarrée avec succès !")
+
+    # Test immédiat
+    await send_daily_calendar()
 async def on_ready():
     print(f'✅ {bot.user} est connecté !')
     send_daily_calendar.start()  # Démarrer la tâche automatique
@@ -33,7 +41,7 @@ async def on_ready():
 async def send_daily_calendar():
     """Envoie automatiquement le message du calendrier chaque jour"""
     channel = bot.get_channel(CHANNEL_ID)
-    
+
     if channel:
         print(f"📢 Message envoyé dans : {channel.name}")  # Debug dans Railway Logs
         await channel.send(embed=generate_calendar_embed())
