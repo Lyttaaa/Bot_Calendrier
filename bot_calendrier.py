@@ -7,8 +7,8 @@ import random
 TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'environnement
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
-POST_HOUR = 13  # Heure d'envoi du message automatique
-POST_MINUTE = 56
+POST_HOUR = 14  # Heure d'envoi du message automatique
+POST_MINUTE = 10
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -85,6 +85,24 @@ def generate_calendar(mois_nom, jour_mois):
     return calendrier
 
 @bot.event
+async def on_ready():
+    print(f"✅ {bot.user} est connecté et actif !")
+    
+    # Vérification du channel
+    channel = bot.get_channel(CHANNEL_ID)
+    if channel:
+        print(f"📨 Channel trouvé : {channel.name} (ID: {CHANNEL_ID})")
+        
+        # 🛠️ Test immédiat d'un message envoyé dans le channel
+        await channel.send("🔧 **Test de connexion** : Si vous voyez ce message, le bot peut envoyer des messages ici.")
+    
+    else:
+        print("❌ Erreur : Impossible de trouver le channel. Vérifie l'ID dans ton script !")
+    
+    # Vérification et démarrage de la tâche planifiée
+    if not send_daily_calendar.is_running():
+        send_daily_calendar.start()
+        print("⏰ Envoi automatique du calendrier activé !")
 async def on_ready():
     print(f"✅ {bot.user} est connecté et actif !")
     print(f"📌 Commandes enregistrées : {[command.name for command in bot.commands]}")
