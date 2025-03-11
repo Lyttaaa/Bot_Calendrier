@@ -61,10 +61,10 @@ async def send_daily_calendar():
 
         # Générer les jours du mois avec highlight du jour actuel
         jours_mois = []
-        for i in range(1, 33):  # Boucle de 1 à 32 jours du mois
-            jour_str = f"{i:2}"  # Garde l'alignement
+        for i in range(1, 33):  # Boucle de 1 à 32 (jours du mois)
+            jour_str = f"{i:2}"  # Conserve l'alignement (chaque jour fait 2 caractères)
             if i == jour_mois:
-                jour_str = f"-{jour_str}-"  # Met en surbrillance avec un soulignement
+                jour_str = f"-{i}-" if i >= 10 else f"-{i} -"  # Ajuste la largeur pour garder l'alignement
             jours_mois.append(jour_str)
 
         # Construction du calendrier sous forme de colonnes
