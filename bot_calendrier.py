@@ -5,7 +5,7 @@ import datetime
 import random
 
 TOKEN = os.getenv("TOKEN")
-CHANNEL_ID = int(os.getenv("CHANNEL_ID"))  # ID du canal où le bot envoie les messages
+CHANNEL_ID = 1348851808549867602  # Remplace ce nombre par l'ID de ton canal Discord
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
