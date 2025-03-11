@@ -80,7 +80,7 @@ async def send_daily_calendar():
     calendrier_texte = jours_abbr_str + "\n"
     calendrier_texte += ligne_separation + "\n"
 
-for i in range(0, len(jours_mois), 8):  # Groupe par semaines de 8 jours
+    for i in range(0, len(jours_mois), 8):  # Groupe par semaines de 8 jours
     semaine = "   ".join(jours_mois[i:i+8])
     calendrier_texte += semaine + "\n"
 
