@@ -7,8 +7,8 @@ import random
 TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'environnement
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
-POST_HOUR = 8  # Heure d'envoi du message automatique
-POST_MINUTE = 0
+POST_HOUR = 13  # Heure d'envoi du message automatique
+POST_MINUTE = 46
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -88,26 +88,26 @@ def generate_calendar(mois_nom, jour_mois):
 async def on_ready():
     print(f"✅ {bot.user} est connecté et actif !")
     print(f"📌 Commandes enregistrées : {[command.name for command in bot.commands]}")
+    
+    # Vérification et démarrage de la tâche planifiée
     if not send_daily_calendar.is_running():
         send_daily_calendar.start()
+        print("⏰ Envoi automatique du calendrier activé !")
 
 @bot.command(name="calendrier")
 async def calendrier(ctx):
     """ Affiche la date et le calendrier en temps réel """
     await send_calendar_message(ctx.channel)
 
-@bot.command(name="festivités_liste")
-async def festivites_liste(ctx):
-    """ Affiche la liste complète des festivités avec leurs dates """
-    festivites_text = "\n".join([f"📅 **{jour} {mois}** - {nom}" for (jour, mois), nom in festivites.items()])
-
-    embed = discord.Embed(
-        title="🎊 Liste des Festivités de Lumharel",
-        description=festivites_text,
-        color=0xFFD700
-    )
-
-    await ctx.send(embed=embed)
+@tasks.loop(time=datetime.time(POST_HOUR, POST_MINUTE))
+async def send_daily_calendar():
+    """ Envoie automatiquement le calendrier chaque jour """
+    channel = bot.get_channel(CHANNEL_ID)
+    if channel:
+        print("📨 Envoi du message automatique du calendrier...")
+        await send_calendar_message(channel)
+    else:
+        print("❌ Erreur : Channel introuvable ! Vérifie l'ID du canal.")
 
 async def send_calendar_message(channel):
     """ Génère et envoie le message du calendrier """
@@ -130,15 +130,6 @@ async def send_calendar_message(channel):
 
     embed.add_field(name="📅 Voir le calendrier complet", value="[🔗 Cliquez ici](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)", inline=False)
 
-    if channel:
-        await channel.send(embed=embed)
-    else:
-        print("❌ Erreur : Channel introuvable ! Vérifie l'ID du canal.")
-
-@tasks.loop(time=datetime.time(POST_HOUR, POST_MINUTE))
-async def send_daily_calendar():
-    """ Envoie automatiquement le calendrier chaque jour """
-    channel = bot.get_channel(CHANNEL_ID)
-    await send_calendar_message(channel)
+    await channel.send(embed=embed)
 
 bot.run(TOKEN)
