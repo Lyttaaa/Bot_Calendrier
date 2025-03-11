@@ -29,7 +29,16 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f'✅ {bot.user} est connecté !')
     send_daily_calendar.start()  # Démarrer la tâche automatique
-    await send_daily_calendar()
+    @tasks.loop(hours=24)
+async def send_daily_calendar():
+    """Envoie automatiquement le message du calendrier chaque jour"""
+    channel = bot.get_channel(CHANNEL_ID)
+    
+    if channel:
+        print(f"📢 Message envoyé dans : {channel.name}")  # Debug dans Railway Logs
+        await channel.send(embed=generate_calendar_embed())
+    else:
+        print("❌ Erreur : Le bot ne trouve pas le salon !")
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID du salon où poster le message
 
 # Jours et mois de Lumharel
