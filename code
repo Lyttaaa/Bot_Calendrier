@@ -1,0 +1,44 @@
+import discord
+from discord.ext import commands
+import os
+
+TOKEN = os.getenv("TOKEN")  # Récupération du token depuis une variable d'environnement
+
+bot = commands.Bot(command_prefix="!")
+
+@bot.event
+async def on_ready():
+    print(f'Connecté en tant que {bot.user}')
+
+@bot.command()
+async def calendrier(ctx):
+    """Affiche la date actuelle en Cycle des Souffles avec image du calendrier."""
+    
+    # Définition des données du calendrier
+    jour_lumharel = "Tel 15 Vækirn, 1532"
+    ere = "Cycle Unifié"
+    festivite = "Aucune"
+    phase_lunaire = "Astraelis : 🌔 (Premier Croissant) | Vörna : 🌘 (Dernier Croissant)"
+    image_url = "https://your-server.com/calendrier_lumharel_mis_a_jour.png"  # Remplace par l'URL correcte
+    
+    # Création de l'embed
+    embed = discord.Embed(
+        title="📜 Calendrier du Cycle des Souffles",
+        description=f"**Nous sommes le {jour_lumharel} - Ère du {ere}**\n\n✨ *Que les vents de Lumharel vous soient favorables !*",
+        color=0xFFD700
+    )
+    embed.add_field(name="🎊 Festivité", value=festivite, inline=True)
+    embed.add_field(name="🌙 Phases Lunaires", value=phase_lunaire, inline=True)
+    embed.set_image(url=image_url)
+    embed.set_footer(text="📜 Suivez le cycle, suivez le souffle...")
+    
+    # Envoi de l'embed
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def calendrierlien(ctx):
+    """Renvoie le lien vers le calendrier complet."""
+    await ctx.send("🔗 **Consultez le calendrier complet ici :** https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78")
+
+# Démarrer le bot
+bot.run(TOKEN)
