@@ -29,6 +29,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f'✅ {bot.user} est connecté !')
     send_daily_calendar.start()  # Démarrer la tâche automatique
+    await send_daily_calendar()
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID du salon où poster le message
 
 # Jours et mois de Lumharel
