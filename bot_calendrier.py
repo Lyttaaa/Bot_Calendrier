@@ -64,7 +64,7 @@ async def send_daily_calendar():
         for i in range(1, 33):  # Boucle de 1 à 32 (jours du mois)
             jour_str = f"{i:2}"  # Conserve l'alignement (chaque jour fait 2 caractères)
             if i == jour_mois:
-                jour_str = f"-{i}-" if i >= 5 else f"-{i} -"  # Ajuste la largeur pour garder l'alignement
+                jour_str = f"-{i}-" if i >= 1 else f"-{i} -"  # Ajuste la largeur pour garder l'alignement
             jours_mois.append(jour_str)
 
         # Construction du calendrier sous forme de colonnes
