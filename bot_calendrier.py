@@ -7,8 +7,8 @@ import random
 TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'environnement
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
-POST_HOUR = 8  # Heure d'envoi du message automatique
-POST_MINUTE = 0
+POST_HOUR = 12  # Heure d'envoi du message automatique
+POST_MINUTE = 56
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -16,7 +16,6 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Jours et mois du calendrier de Lumharel
 jours_complet = ["Tellion", "Sildrien", "Vaeldris", "Nythariel", "Zorvael", "Luméon", "Kaelios", "Eldrith"]
-jours_abbr = ["Tel", "Sil", "Vae", "Nyt", "Zor", "Lum", "Kae", "Eld"]
 mois_noms = ["Orréa", "Thiloris", "Vækirn", "Dornis", "Solvannar", "Velkaris", "Nytheris", "Varneth", "Elthiris", "Zorvahl", "Draknar", "Umbraël", "Aëldrin", "Kaelthor", "Eldros"]
 
 # Phases des lunes
@@ -31,7 +30,7 @@ messages_accueil = [
     "🌿 Que les murmures des anciens Façonneurs vous inspirent aujourd’hui !"
 ]
 
-# Liste des festivités fixes
+# Liste des festivités dynamiques
 festivites = {
     (1, "Orréa"): "Solstice du Grand Réveil",
     (15, "Vækirn"): "Festival des Flammes",
@@ -47,52 +46,48 @@ festivites = {
 async def on_ready():
     print(f"✅ {bot.user} est connecté et actif !")
     print(f"📌 Commandes enregistrées : {[command.name for command in bot.commands]}")
-    if not send_daily_calendar.is_running():
-        send_daily_calendar.start()
 
-def get_lumharel_date():
-    """ Calcule la date dans le calendrier de Lumharel et les festivités associées """
-    date_actuelle = datetime.date.today()
-    jour_annee = date_actuelle.timetuple().tm_yday
+@bot.command(name="calendrier")
+async def calendrier(ctx):
+    """ Affiche la date et le calendrier en temps réel """
+    await send_daily_calendar()
 
-    mois_index = (jour_annee - 1) // 32
-    jour_mois = ((jour_annee - 1) % 32) + 1
-    jour_semaine_index = (jour_annee - 1) % 8
-    jour_semaine = jours_complet[jour_semaine_index]
+@bot.command(name="calendrier_add_event")
+async def calendrier_add_event(ctx, date: str, *, nom: str):
+    """ Ajoute une festivité (ex: !calendrier_add_event 15/03/1532 FêteTest) """
+    try:
+        jour, mois_num, annee = map(int, date.split("/"))
+        mois_nom = mois_noms[mois_num - 1]  # Conversion du numéro de mois en nom
 
-    phase_astraelis = phases_astraelis[jour_annee % len(phases_astraelis)]
-    phase_vorna = phases_vorna[jour_annee % len(phases_vorna)]
+        festivites[(jour, mois_nom)] = nom
+        await ctx.send(f"✅ **{nom}** ajoutée au {jour} {mois_nom}, {annee} dans le Calendrier du Cycle des Souffles.")
+    except (ValueError, IndexError):
+        await ctx.send("⚠️ Format incorrect ! Utilisation : `!calendrier_add_event JJ/MM/AAAA NomDeLaFête`.")
 
-    mois_nom = mois_noms[mois_index]
-    festivite_du_jour = festivites.get((jour_mois, mois_nom), "Aucune")
+@bot.command(name="calendrier_remove_event")
+async def calendrier_remove_event(ctx, date: str, *, nom: str):
+    """ Supprime une festivité (ex: !calendrier_remove_event 15/03/1532 FêteTest) """
+    try:
+        jour, mois_num, annee = map(int, date.split("/"))
+        mois_nom = mois_noms[mois_num - 1]
 
-    return mois_nom, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite_du_jour, date_actuelle
+        if (jour, mois_nom) in festivites and festivites[(jour, mois_nom)] == nom:
+            del festivites[(jour, mois_nom)]
+            await ctx.send(f"❌ **{nom}** supprimée du {jour} {mois_nom}, {annee}.")
+        else:
+            await ctx.send("⚠️ Aucune festivité trouvée avec ce nom et cette date.")
+    except (ValueError, IndexError):
+        await ctx.send("⚠️ Format incorrect ! Utilisation : `!calendrier_remove_event JJ/MM/AAAA NomDeLaFête`.")
 
-def generer_calendrier(mois, jour_mois):
-    """ Génère le calendrier avec alignement corrigé """
-    
-    # Espacement pour garder les colonnes alignées
-    jours_abbr_str = " ".join(f"{abbr:^5}" for abbr in jours_abbr)  # Centrage pour aligner les colonnes
-    ligne_separation = "─" * len(jours_abbr_str)
-
-    jours_mois = []
-    for i in range(1, 33):
-        jour_str = f"{i:2}"
-        if i == jour_mois:
-            jour_str = f"[{jour_str.strip()}]"  # Mise en surbrillance du jour en cours
-        jours_mois.append(f"{jour_str:^5}")  # Centrage pour aligner les chiffres
-
-    calendrier_texte = f"{jours_abbr_str}\n{ligne_separation}\n"
-    for i in range(0, len(jours_mois), 8):
-        calendrier_texte += " ".join(jours_mois[i:i+8]) + "\n"
-
-    return calendrier_texte
+@bot.command(name="calendrierlien")
+async def calendrier_lien(ctx):
+    """ Renvoie le lien vers le calendrier complet """
+    await ctx.send("📅 **Voir le calendrier complet ici :** [🔗 Fantasy Calendar](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)")
 
 @tasks.loop(time=datetime.time(POST_HOUR, POST_MINUTE))
 async def send_daily_calendar():
-    """ Envoie le calendrier chaque jour avec les corrections demandées """
+    """ Envoie le calendrier chaque jour """
     mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
-    calendrier = generer_calendrier(mois, jour_mois)
     message_immersion = random.choice(messages_accueil)
 
     embed = discord.Embed(
@@ -103,15 +98,9 @@ async def send_daily_calendar():
         color=0xFFD700
     )
 
-    # Affichage aligné : festivités à gauche, phases lunaires à droite
-    embed.add_field(
-        name="🎉 Festivité du jour", value=f"**{festivite}**", inline=True
-    )
-    embed.add_field(
-        name="🌙 Phases lunaires", value=f"Astraelis : {phase_astraelis}\nVörna : {phase_vorna}", inline=True
-    )
+    embed.add_field(name="🎉 Festivité du jour", value=f"**{festivite}**", inline=True)
+    embed.add_field(name="🌙 Phases lunaires", value=f"Astraelis : {phase_astraelis}\nVörna : {phase_vorna}", inline=True)
 
-    embed.add_field(name="📆 Mois en cours", value=f"```\n{calendrier}```", inline=False)
     embed.add_field(name="📅 Voir le calendrier complet", value="[🔗 Cliquez ici](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)", inline=False)
 
     channel = bot.get_channel(CHANNEL_ID)
@@ -119,10 +108,5 @@ async def send_daily_calendar():
         await channel.send(embed=embed)
     else:
         print("❌ Erreur : Channel introuvable ! Vérifie l'ID du canal.")
-
-@bot.command(name="calendrier")
-async def calendrier(ctx):
-    """ Commande pour afficher la date et le calendrier en temps réel """
-    await send_daily_calendar()
 
 bot.run(TOKEN)
