@@ -14,7 +14,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # ID du salon Discord où envoyer le message automatique
-CHANNEL_ID = 123456789012345678  # Remplace avec ton vrai ID de salon !
+CHANNEL_ID = 1348851808549867602  # Remplace avec ton vrai ID de salon !
 
 # ✅ 1. Définition de la tâche automatique avant on_ready()
 @tasks.loop(hours=24)
