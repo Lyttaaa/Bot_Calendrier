@@ -4,7 +4,13 @@ import datetime
 import random
 
 # Configuration du bot
-TOKEN = "TON_TOKEN_DISCORD"
+TOKEN = os.getenv("TOKEN")
+
+if not TOKEN:
+    print("❌ Erreur : Aucun token trouvé ! Vérifie tes variables d'environnement.")
+else:
+    print(f"🔑 Token chargé : {TOKEN[:5]}... (caché pour sécurité)")
+  
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton salon
 
 intents = discord.Intents.default()
