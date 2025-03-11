@@ -9,9 +9,10 @@ CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
 # 🔴 Définition de l'heure d'envoi du message
 POST_HOUR = 12  # Heure en format 24h (ex: 8 = 08h00)
-POST_MINUTE = 8  # Minute exacte (ex: 30 = 08h30)
+POST_MINUTE = 11  # Minute exacte (ex: 30 = 08h30)
 
 intents = discord.Intents.default()
+intents.message_content = True  # Ajoute cette ligne
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Définition des noms des jours et des mois
