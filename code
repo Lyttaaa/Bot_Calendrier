@@ -1,25 +1,62 @@
 import discord
 from discord.ext import commands
 import os
+import datetime
+import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw, ImageFont
 
-TOKEN = os.getenv("TOKEN")  # Récupération du token depuis une variable d'environnement
+TOKEN = os.getenv("TOKEN")  # Récupération du token depuis Railway
 
 bot = commands.Bot(command_prefix="!")
 
+# Définition du calendrier
+jours = ["Tellion", "Sildrien", "Vaeldris", "Nythariel", "Zorvael", "Luméon", "Kaelios", "Eldrith"]
+mois = [
+    "Orréa", "Thiloris", "Vækirn", "Dornis", "Solvannar", "Velkaris",
+    "Nytheris", "Varneth", "Elthiris", "Zorvahl", "Draknar", "Umbraël",
+    "Aëldrin", "Kaelthor", "Eldros"
+]
+
+# Création de l'image du calendrier
+def generer_image_calendrier():
+    largeur, hauteur = 600, 400
+    image = Image.new("RGB", (largeur, hauteur), "white")
+    draw = ImageDraw.Draw(image)
+
+    # Charger une police
+    try:
+        font = ImageFont.truetype("arial.ttf", 20)
+    except:
+        font = ImageFont.load_default()
+
+    # Titre
+    draw.text((180, 20), "Calendrier du Cycle des Souffles", fill="black", font=font)
+
+    # Dessiner les jours de la semaine
+    y_offset = 70
+    for jour in jours:
+        draw.text((20, y_offset), jour, fill="black", font=font)
+        y_offset += 40
+
+    # Sauvegarde l'image
+    image_path = "/mnt/data/calendrier.png"
+    image.save(image_path)
+    return image_path
+
 @bot.event
 async def on_ready():
-    print(f'Connecté en tant que {bot.user}')
+    print(f'✅ Connecté en tant que {bot.user}')
 
 @bot.command()
 async def calendrier(ctx):
-    """Affiche la date actuelle en Cycle des Souffles avec image du calendrier."""
-    
-    # Définition des données du calendrier
-    jour_lumharel = "Tel 15 Vækirn, 1532"
+    """Affiche la date actuelle et génère une image du calendrier"""
+    jour_lumharel = "Tellion 15 Vækirn, 1532"
     ere = "Cycle Unifié"
     festivite = "Aucune"
-    phase_lunaire = "Astraelis : 🌔 (Premier Croissant) | Vörna : 🌘 (Dernier Croissant)"
-    image_url = "https://your-server.com/calendrier_lumharel_mis_a_jour.png"  # Remplace par l'URL correcte
+    phase_lunaire = "Astraelis : 🌔 | Vörna : 🌘"
+
+    # Génération de l'image
+    image_path = generer_image_calendrier()
     
     # Création de l'embed
     embed = discord.Embed(
@@ -29,11 +66,11 @@ async def calendrier(ctx):
     )
     embed.add_field(name="🎊 Festivité", value=festivite, inline=True)
     embed.add_field(name="🌙 Phases Lunaires", value=phase_lunaire, inline=True)
-    embed.set_image(url=image_url)
     embed.set_footer(text="📜 Suivez le cycle, suivez le souffle...")
-    
-    # Envoi de l'embed
+
+    # Envoi de l'image et de l'embed
     await ctx.send(embed=embed)
+    await ctx.send(file=discord.File(image_path))
 
 @bot.command()
 async def calendrierlien(ctx):
@@ -42,20 +79,3 @@ async def calendrierlien(ctx):
 
 # Démarrer le bot
 bot.run(TOKEN)
-
-# Fichier requirements.txt
-requirements_txt = """discord.py
-python-dotenv*
-discord.py
-matplotlib
-pillow"""
-
-# Fichier service.json
-service_json = """{
-  "build": {
-    "env": {
-      "PYTHON_VERSION": "3.9"
-    }
-  },
-  "start": "python3 bot_calendrier.py"
-}"""
