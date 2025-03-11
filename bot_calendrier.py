@@ -110,16 +110,19 @@ async def calendrier(ctx):
     """ Affiche la date et le calendrier en temps réel """
     await send_calendar_message(ctx.channel)
 
+# Définir le fuseau horaire correct
+FUSEAU_HORAIRE = pytz.timezone("Europe/Paris")  # Change selon ta zone
+
 @tasks.loop(seconds=60)
 async def send_daily_calendar():
     """ Vérifie l'heure chaque minute et envoie le calendrier si nécessaire """
-    now = datetime.datetime.now()
-    
-    print(f"⏳ [DEBUG] Vérification de l'heure... Actuellement : {now.strftime('%H:%M:%S')} - Envoi prévu à {POST_HOUR:02d}:{POST_MINUTE:02d}")
+    now_utc = datetime.datetime.now(pytz.utc)  # Heure UTC
+    now_local = now_utc.astimezone(FUSEAU_HORAIRE)  # Convertie en heure locale
 
-    # Vérifie si l'heure actuelle correspond à l'heure d'envoi planifiée
-    if now.hour == POST_HOUR and now.minute == POST_MINUTE:
-        print(f"📨 [DEBUG] Envoi du message automatique à {now.strftime('%H:%M:%S')}...")
+    print(f"⏳ [DEBUG] Vérification de l'heure... Actuellement : {now_local.strftime('%H:%M:%S')} - Envoi prévu à {POST_HOUR:02d}:{POST_MINUTE:02d}")
+
+    if now_local.hour == POST_HOUR and now_local.minute == POST_MINUTE:
+        print(f"📨 [DEBUG] Envoi du message automatique à {now_local.strftime('%H:%M:%S')}...")
         
         channel = bot.get_channel(CHANNEL_ID)
         if channel:
@@ -128,7 +131,7 @@ async def send_daily_calendar():
         else:
             print(f"❌ [DEBUG] Erreur : Channel introuvable avec l'ID {CHANNEL_ID}.")
     else:
-        print(f"⌛ [DEBUG] Il est {now.strftime('%H:%M:%S')}, attente de l'heure exacte...")
+        print(f"⌛ [DEBUG] Il est {now_local.strftime('%H:%M:%S')}, attente de l'heure exacte...")
 
 async def send_calendar_message(channel):
     """ Génère et envoie le message du calendrier """
