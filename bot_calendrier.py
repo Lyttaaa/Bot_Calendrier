@@ -8,7 +8,7 @@ TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'env
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
 POST_HOUR = 13  # Heure d'envoi du message automatique
-POST_MINUTE = 49
+POST_MINUTE = 56
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -101,13 +101,14 @@ async def calendrier(ctx):
 
 @tasks.loop(time=datetime.time(POST_HOUR, POST_MINUTE))
 async def send_daily_calendar():
-    """ Envoie automatiquement le calendrier chaque jour """
+    """ Vérifie et envoie automatiquement le calendrier chaque jour """
     channel = bot.get_channel(CHANNEL_ID)
+    
     if channel:
-        print("📨 Envoi du message automatique du calendrier...")
+        print(f"📨 Envoi du message automatique du calendrier dans {channel.name} (ID: {CHANNEL_ID})...")
         await send_calendar_message(channel)
     else:
-        print("❌ Erreur : Channel introuvable ! Vérifie l'ID du canal.")
+        print(f"❌ Erreur : Channel introuvable avec l'ID {CHANNEL_ID}. Vérifie l'ID du canal dans le script !")
 
 async def send_calendar_message(channel):
     """ Génère et envoie le message du calendrier """
