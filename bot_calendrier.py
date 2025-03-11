@@ -8,7 +8,7 @@ TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'env
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
 POST_HOUR = 14  # Heure en 24h (ex: 8 = 08h00 du matin)
-POST_MINUTE = 27  # Minute exacte de l'envoi
+POST_MINUTE = 30  # Minute exacte de l'envoi
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -87,19 +87,20 @@ def generate_calendar(mois_nom, jour_mois):
 @bot.event
 async def on_ready():
     print(f"✅ {bot.user} est connecté et actif !")
+    print(f"📌 Commandes enregistrées : {[command.name for command in bot.commands]}")
     
-    # Vérification du channel
     channel = bot.get_channel(CHANNEL_ID)
     if channel:
         print(f"📨 Channel trouvé : {channel.name} (ID: {CHANNEL_ID})")
-    
     else:
         print("❌ Erreur : Impossible de trouver le channel. Vérifie l'ID dans ton script !")
-    
+
     # Vérification et démarrage de la tâche planifiée
     if not send_daily_calendar.is_running():
         send_daily_calendar.start()
-        print("⏰ Envoi automatique du calendrier activé !")
+        print(f"⏰ Envoi automatique du calendrier activé pour {POST_HOUR:02d}:{POST_MINUTE:02d} chaque jour.")
+    else:
+        print("⚠️ La tâche d'envoi est déjà en cours.")
         
 async def on_ready():
     print(f"✅ {bot.user} est connecté et actif !")
