@@ -33,6 +33,9 @@ async def on_ready():
     if not send_daily_calendar.is_running():
         send_daily_calendar.start()
         print("🔄 Tâche automatique démarrée avec succès !")  # Debug
+        
+    await send_daily_calendar()  # 💡 Test immédiat !
+    
     else:
         print("⚠️ La tâche automatique était déjà en cours !")
 
@@ -45,13 +48,14 @@ async def on_ready():
 @tasks.loop(hours=24)
 async def send_daily_calendar():
     """Envoie automatiquement le message du calendrier chaque jour"""
+    print("⏳ Tentative d'envoi du calendrier...")
+    
     channel = bot.get_channel(CHANNEL_ID)
-
     if channel:
-        print(f"📢 Message envoyé dans : {channel.name}")  # Debug dans Railway Logs
+        print(f"📢 Message envoyé dans : {channel.name}")  # Debug
         await channel.send(embed=generate_calendar_embed())
     else:
-        print("❌ Erreur : Le bot ne trouve pas le salon !")
+        print("❌ Erreur : Le bot ne trouve pas le salon ! Vérifie l'ID du salon.")
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID du salon où poster le message
 
 # Jours et mois de Lumharel
