@@ -1,3 +1,11 @@
+import os
+
+TOKEN = os.getenv("TOKEN")
+
+if TOKEN is None:
+    print("❌ Erreur : La variable d'environnement 'TOKEN' est absente ou invalide.")
+else:
+    print("✅ Token chargé avec succès.")
 import discord
 from discord.ext import commands
 import os
