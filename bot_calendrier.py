@@ -8,7 +8,7 @@ TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'env
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
 POST_HOUR = 14  # Heure en 24h (ex: 8 = 08h00 du matin)
-POST_MINUTE = 30  # Minute exacte de l'envoi
+POST_MINUTE = 33  # Minute exacte de l'envoi
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -118,11 +118,11 @@ async def calendrier(ctx):
 
 @tasks.loop(time=datetime.time(POST_HOUR, POST_MINUTE))
 async def send_daily_calendar():
-    """ Envoie automatiquement le calendrier chaque jour à l'heure définie """
-    print(f"⏳ Vérification de l'heure... Envoi prévu à {POST_HOUR:02d}:{POST_MINUTE:02d}")
-    
-    channel = bot.get_channel(CHANNEL_ID)
+    """ Vérifie et envoie automatiquement le calendrier chaque jour """
+    print(f"⏳ Vérification de l'heure... Il est {datetime.datetime.now().strftime('%H:%M')}, l'envoi est prévu à {POST_HOUR:02d}:{POST_MINUTE:02d}")
 
+    channel = bot.get_channel(CHANNEL_ID)
+    
     if channel:
         print(f"📨 Envoi du message automatique dans {channel.name} (ID: {CHANNEL_ID})...")
         await send_calendar_message(channel)
