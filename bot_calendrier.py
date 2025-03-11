@@ -5,20 +5,17 @@ import datetime
 import random
 
 TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'environnement
-CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
+CHANNEL_ID = 123456789012345678  # Remplace avec l'ID de ton canal Discord
 
-# 🔴 Définition de l'heure d'envoi du message
-POST_HOUR = 12  # Heure en format 24h (ex: 8 = 08h00)
-POST_MINUTE = 20  # Minute exacte (ex: 30 = 08h30)
+# 🔴 Définition de l'heure d'envoi du message automatique
+POST_HOUR = 8  # Heure en format 24h (ex: 8 = 08h00)
+POST_MINUTE = 0  # Minute exacte (ex: 30 = 08h30)
 
+# 🔥 Activer les intents pour lire les messages et exécuter les commandes
 intents = discord.Intents.default()
-intents.message_content = True  # Ajoute cette ligne
+intents.message_content = True  # Permet au bot de lire les messages
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-@bot.command(name="calendrier")
-async def calendrier(ctx):
-    await ctx.send("✅ Commande calendrier active !")
-    
 # Définition des noms des jours et des mois
 jours_complet = ["Tellion", "Sildrien", "Vaeldris", "Nythariel", "Zorvael", "Luméon", "Kaelios", "Eldrith"]
 jours_abbr = ["Tel", "Sil", "Vae", "Nyt", "Zor", "Lum", "Kae", "Eld"]
@@ -55,6 +52,10 @@ festivites = {
 @bot.event
 async def on_ready():
     print(f"✅ {bot.user} est connecté et actif !")
+    
+    # Vérifier l'enregistrement des commandes
+    print(f"📌 Commandes enregistrées : {[command.name for command in bot.commands]}")
+
     if not send_daily_calendar.is_running():
         send_daily_calendar.start()
 
@@ -121,14 +122,10 @@ async def send_daily_calendar():
         await channel.send(embed=embed)
     else:
         print("❌ Erreur : Channel introuvable ! Vérifie l'ID du canal.")
-@bot.event
-async def on_ready():
-    print(f"✅ {bot.user} est connecté et actif !")
-    
-    # Vérification des commandes enregistrées
-    print(f"📌 Commandes enregistrées : {[command.name for command in bot.commands]}")
 
-    if not send_daily_calendar.is_running():
-        send_daily_calendar.start()
-        
+@bot.command(name="calendrier")
+async def calendrier(ctx):
+    """ Commande pour afficher la date et le calendrier en temps réel """
+    await send_daily_calendar()
+
 bot.run(TOKEN)
