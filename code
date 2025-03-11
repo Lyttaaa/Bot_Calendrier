@@ -42,3 +42,15 @@ async def calendrierlien(ctx):
 
 # Démarrer le bot
 bot.run(TOKEN)
+
+# Fichier requirements.txt
+requirements_txt = """discord.py"""
+
+# Fichier service.json
+service_json = """{
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "pip install -r requirements.txt"
+  },
+  "start": "python bot_calendrier.py"
+}"""
