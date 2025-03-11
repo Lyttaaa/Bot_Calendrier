@@ -37,7 +37,8 @@ async def on_ready():
 async def on_ready():
     print(f'✅ {bot.user} est connecté !')
     send_daily_calendar.start()  # Démarrer la tâche automatique
-    @tasks.loop(hours=24)
+    
+@tasks.loop(hours=24)
 async def send_daily_calendar():
     """Envoie automatiquement le message du calendrier chaque jour"""
     channel = bot.get_channel(CHANNEL_ID)
