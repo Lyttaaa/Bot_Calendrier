@@ -7,8 +7,8 @@ import random
 TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'environnement
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
-POST_HOUR = 12  # Heure d'envoi du message automatique
-POST_MINUTE = 46
+POST_HOUR = 8  # Heure d'envoi du message automatique
+POST_MINUTE = 0
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -103,11 +103,12 @@ async def send_daily_calendar():
         color=0xFFD700
     )
 
-    # Festivités et phases lunaires sur une seule ligne
+    # Affichage aligné : festivités à gauche, phases lunaires à droite
     embed.add_field(
-        name="🎉 Festivité et 🌙 Phases lunaires",
-        value=f"**{festivite}** | Astraelis : {phase_astraelis} | Vörna : {phase_vorna}",
-        inline=False
+        name="🎉 Festivité du jour", value=f"**{festivite}**", inline=True
+    )
+    embed.add_field(
+        name="🌙 Phases lunaires", value=f"Astraelis : {phase_astraelis}\nVörna : {phase_vorna}", inline=True
     )
 
     embed.add_field(name="📆 Mois en cours", value=f"```\n{calendrier}```", inline=False)
