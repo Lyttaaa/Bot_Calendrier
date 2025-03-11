@@ -84,8 +84,8 @@ async def send_daily_calendar():
     semaine = "   ".join(jours_mois[i:i+8])
     calendrier_texte += semaine + "\n"
 
-        # Création de l'embed avec l'ordre exact demandé
-        embed = discord.Embed(
+    # Création de l'embed avec l'ordre exact demandé
+    embed = discord.Embed(
             title="📜 Calendrier du Cycle des Souffles",
             description=f"📅 **Nous sommes le {jour_mois} ({jour_semaine}) de {mois}, {annee} - Ère du {ere}**\n\n{message_immersif}",
             color=0xFFD700
