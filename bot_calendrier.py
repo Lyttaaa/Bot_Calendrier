@@ -126,7 +126,7 @@ async def send_calendar_message(channel):
     embed.add_field(name="🎉 Festivité du jour", value=f"**{festivite}**", inline=True)
     embed.add_field(name="🌙 Phases lunaires", value=f"Astraelis : {phase_astraelis}\nVörna : {phase_vorna}", inline=True)
 
-    embed.add_field(name="🗓️ Calendrier du mois", value=f"```\n{calendrier_formatte}\n```", inline=False)
+    embed.add_field(name="🗓️ Mois en cours", value=f"```\n{calendrier_formatte}\n```", inline=False)
 
     embed.add_field(name="📅 Voir le calendrier complet", value="[🔗 Cliquez ici](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)", inline=False)
 
