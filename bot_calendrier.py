@@ -110,22 +110,4 @@ async def calendrier(ctx):
 
     await ctx.send(embed=embed)
 
-@bot.command(name="calendrier_add_event")
-async def add_event(ctx, nom: str, jour: int, mois: str, annee: int):
-    """ Commande pour ajouter une festivité """
-    if (jour, mois) in festivites:
-        await ctx.send(f"⚠️ Une festivité existe déjà pour cette date ! ({jour} {mois})")
-    else:
-        festivites[(jour, mois)] = nom
-        await ctx.send(f"✅ Festivité '{nom}' ajoutée pour le {jour} {mois}, {annee} !")
-
-@bot.command(name="calendrier_remove_event")
-async def remove_event(ctx, jour: int, mois: str):
-    """ Commande pour supprimer une festivité """
-    if (jour, mois) in festivites:
-        del festivites[(jour, mois)]
-        await ctx.send(f"🗑️ Festivité supprimée pour le {jour} {mois}.")
-    else:
-        await ctx.send(f"⚠️ Aucune festivité trouvée à cette date ({jour} {mois}).")
-
 bot.run(TOKEN)
