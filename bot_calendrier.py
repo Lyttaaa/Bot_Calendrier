@@ -120,7 +120,14 @@ async def calendrier(ctx):
 @tasks.loop(time=datetime.time(POST_HOUR, POST_MINUTE))
 async def send_daily_calendar():
     """ Vérifie et envoie automatiquement le calendrier chaque jour """
+    print("⏳ Vérification de la tâche planifiée...")
     channel = bot.get_channel(CHANNEL_ID)
+
+    if channel:
+        print(f"📨 Envoi du message automatique dans {channel.name} (ID: {CHANNEL_ID})...")
+        await send_calendar_message(channel)
+    else:
+        print(f"❌ Erreur : Channel introuvable avec l'ID {CHANNEL_ID}. Vérifie l'ID du canal dans le script !")
     
     if channel:
         print(f"📨 Envoi du message automatique du calendrier dans {channel.name} (ID: {CHANNEL_ID})...")
