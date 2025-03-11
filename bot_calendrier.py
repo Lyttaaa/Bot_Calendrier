@@ -1,3 +1,7 @@
+import discord
+from discord.ext import commands, tasks
+import os
+import datetime
 import os
 
 TOKEN = os.getenv("TOKEN")
@@ -21,6 +25,11 @@ intents.presences = True  # Facultatif, mais peut être utile
 intents.members = True  # Facultatif pour gérer les membres
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+@bot.event
+async def on_ready():
+    print(f'✅ {bot.user} est connecté !')
+    send_daily_calendar.start()  # Démarrer la tâche automatique
+CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID du salon où poster le message
 
 # Jours et mois de Lumharel
 jours = ["Tel", "Sil", "Vae", "Nyt", "Zor", "Lum", "Kae", "Eld"]
@@ -81,6 +90,31 @@ async def calendrier(ctx):
 async def calendrierlien(ctx):
     """Renvoie le lien vers le calendrier complet."""
     await ctx.send("🔗 **Consultez le calendrier complet ici :** https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78")
+@tasks.loop(hours=24)
+async def send_daily_calendar():
+    """Envoie automatiquement le message du calendrier chaque jour"""
+    channel = bot.get_channel(CHANNEL_ID)
+    if channel:
+        await channel.send(embed=generate_calendar_embed())
 
+def generate_calendar_embed():
+    """Génère l'embed du calendrier"""
+    today = datetime.datetime.utcnow().day
+    mois_actuel = "Vækirn"
+    annee = 1532
+    ere = "Cycle Unifié"
+    festivite = "Aucune"
+    phases_lunaires = "Astraelis : 🌔 | Vörna : 🌘"
+
+    embed = discord.Embed(
+        title="📜 Calendrier du Cycle des Souffles",
+        description=f"**Nous sommes le {today} {mois_actuel}, {annee} - Ère du {ere}**\n\n✨ *Que les vents de Lumharel vous soient favorables !*",
+        color=0xFFD700
+    )
+    embed.add_field(name="🎊 Festivité", value=festivite, inline=True)
+    embed.add_field(name="🌙 Phases Lunaires", value=phases_lunaires, inline=True)
+    embed.set_footer(text="📜 Suivez le cycle, suivez le souffle...")
+
+    return embed
 # Démarrer le bot
 bot.run(TOKEN)
