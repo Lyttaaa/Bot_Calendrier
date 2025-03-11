@@ -4,6 +4,13 @@ from discord.ext import tasks, commands
 import datetime
 import random
 
+import datetime
+import pytz
+
+# Vérification de l'heure système
+print(f"🕒 [DEBUG] Heure système Railway : {datetime.datetime.now()}")
+
+
 TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'environnement
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
