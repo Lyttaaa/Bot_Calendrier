@@ -8,7 +8,7 @@ TOKEN = os.getenv("TOKEN")  # Récupération du token depuis les variables d'env
 CHANNEL_ID = 1348851808549867602  # Remplace avec l'ID de ton canal Discord
 
 POST_HOUR = 13  # Heure d'envoi du message automatique
-POST_MINUTE = 46
+POST_MINUTE = 49
 
 intents = discord.Intents.default()
 intents.message_content = True
