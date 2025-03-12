@@ -47,22 +47,22 @@ festivites = {
 
 # 📅 Calcul de la Date & des Phases Lunaires
 def get_lumharel_date():
-    """ Calcule la date dans le calendrier de Lumharel et les phases lunaires """
-    date_actuelle = datetime.date.today()
+    """ Calcule la date dans le calendrier de Lumharel et les phases lunaires en fonction du 12/03/2025 """
     
-    # 🔹 Définir le 12/03/2025 comme 7 Kaelios de Vækirn, 1532
-    date_reference = datetime.date(2025, 3, 12)
+    date_actuelle = datetime.date.today()  # Date réelle d'aujourd'hui
+    date_reference = datetime.date(2025, 3, 12)  # Référence du 12 mars 2025
+    
     jour_total_depuis_reference = (date_actuelle - date_reference).days
-    
-    # 🔹 Déterminer le mois et le jour
+
+    # 🔹 Déterminer le mois et le jour en fonction des durées irrégulières des mois
     jours_par_mois = {
         "Orréa": 32, "Thiloris": 28, "Vækirn": 32, "Dornis": 32, "Solvannar": 32,
         "Velkaris": 28, "Nytheris": 32, "Varneth": 28, "Elthiris": 32, "Zorvahl": 32,
         "Draknar": 28, "Umbraël": 32, "Aëldrin": 32, "Kaelthor": 28, "Eldros": 32
     }
-    
-    mois_nom, jour_mois = None, None
+
     jours_cumules = 0
+    mois_nom, jour_mois = None, None
 
     for mois, jours in jours_par_mois.items():
         if jours_cumules + jours > jour_total_depuis_reference % 416:
@@ -75,10 +75,10 @@ def get_lumharel_date():
     jour_semaine_index = (jour_total_depuis_reference % 8)
     jour_semaine = jours_complet[jour_semaine_index]
 
-    # 🔹 Calculer les phases lunaires
-    phase_astraelis_index = (jour_total_depuis_reference % 32) // 4  # 8 phases
-    phase_vorna_index = (jour_total_depuis_reference % 48) // 6  # 8 phases
-    
+    # 🔹 Calcul des phases lunaires à partir du 12/03/2025 comme référence
+    phase_astraelis_index = (jour_total_depuis_reference % 32) // 4  # 8 phases de 4 jours
+    phase_vorna_index = (jour_total_depuis_reference % 48) // 6  # 8 phases de 6 jours
+
     phase_astraelis = phases_astraelis[phase_astraelis_index]
     phase_vorna = phases_vorna[phase_vorna_index]
 
