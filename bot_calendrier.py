@@ -12,7 +12,7 @@ TOKEN = os.getenv("TOKEN")
 CHANNEL_ID = 1348851808549867602  
 
 POST_HOUR = 10  
-POST_MINUTE = 30
+POST_MINUTE = 36
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -114,16 +114,18 @@ def generate_calendar(mois_nom, jour_mois):
     return calendrier
 
 ### 🔹 **Envoi automatique**
-@tasks.loop(seconds=60)
+@tasks.loop(time=datetime.time(POST_HOUR, POST_MINUTE))
 async def send_daily_calendar():
-    now = datetime.datetime.now(pytz.timezone("Europe/Paris"))
-    if now.hour == POST_HOUR and now.minute == POST_MINUTE:
-        channel = bot.get_channel(CHANNEL_ID)
-        if channel:
-            await send_calendar_message(channel)
+    """ Envoie automatiquement le calendrier chaque jour """
+    channel = bot.get_channel(CHANNEL_ID)
+    if channel:
+        print("📨 Envoi du message automatique du calendrier...")
+        await send_calendar_message(channel)
+    else:
+        print("❌ Erreur : Channel introuvable ! Vérifie l'ID du canal.")
 
-### 🔹 **Message du calendrier**
 async def send_calendar_message(channel):
+    """ Génère et envoie le message du calendrier """
     mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
     message_immersion = random.choice(messages_accueil)
     calendrier_formatte = generate_calendar(mois, jour_mois)
@@ -131,17 +133,30 @@ async def send_calendar_message(channel):
     embed = discord.Embed(
         title="📜 Calendrier du Cycle des Souffles",
         description=f"📅 **Nous sommes le {jour_mois} ({jour_semaine}) de {mois}, 1532 - Ère du Cycle Unifié**\n\n"
-                    f"📆 *Correspondance IRL : {date_reelle.strftime('%d/%m/%Y')}*\n\n"
+                    f"📆 *Correspondance dans notre monde : {date_reelle.strftime('%d/%m/%Y')}*\n\n"
                     f"{message_immersion}",
         color=0xFFD700
     )
 
-    embed.add_field(name="🎉 Festivité", value=f"**{festivite}**", inline=True)
-    embed.add_field(name="🌙 Phases lunaires", value=f"Astrealis : {phase_astraelis} | Vörna : {phase_vorna}", inline=True)
+    embed.add_field(name="🎉 Festivité du jour", value=f"**{festivite}**", inline=True)
+    embed.add_field(name="🌙 Phases lunaires", value=f"Astraelis : {phase_astraelis}\nVörna : {phase_vorna}", inline=True)
+
     embed.add_field(name="🗓️ Mois en cours", value=f"```\n{calendrier_formatte}\n```", inline=False)
 
+    embed.add_field(name="📅 Voir le calendrier complet", value="[🔗 Cliquez ici](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)", inline=False)
+
     await channel.send(embed=embed)
-	
+
+@bot.event
+async def on_ready():
+    print(f"✅ {bot.user} est connecté et actif !")
+    print(f"📌 Commandes enregistrées : {[command.name for command in bot.commands]}")
+    
+    # Vérification et démarrage de la tâche planifiée
+    if not send_daily_calendar.is_running():
+        send_daily_calendar.start()
+        print("⏰ Envoi automatique du calendrier activé !")	
+	    
 @bot.command(name="calendrier")
 async def calendrier(ctx):
     """ Affiche la date et le calendrier en temps réel """
