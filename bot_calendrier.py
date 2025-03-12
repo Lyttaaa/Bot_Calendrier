@@ -31,8 +31,8 @@ mois_durees = {
 def is_bissextile(year):
     return year % 2 == 0
 
-# Référence pour le calcul des phases lunaires
-date_reference = datetime.date(1532, 1, 19)  # 19 Orréa 1532
+# Point de départ du calendrier : 1er Tellion d'Orréa 1532 correspond au 1er mars 2025
+date_reference = datetime.date(2025, 3, 1)  
 jours_cycle_astraelis = 32
 jours_cycle_vorna = 48
 phases_lunaires = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
@@ -61,7 +61,7 @@ festivites = {
 def get_lumharel_date():
     """ Calcule la date actuelle dans le calendrier de Lumharel """
     date_actuelle = datetime.date.today()
-    jours_ecoules = (date_actuelle - datetime.date(1532, 1, 1)).days  
+    jours_ecoules = (date_actuelle - date_reference).days  
 
     mois_nom = None
     jour_mois = None
@@ -77,7 +77,6 @@ def get_lumharel_date():
             break
         jour_compte -= duree
 
-    # Sécurité pour éviter un KeyError
     if mois_nom is None or jour_mois is None:
         mois_nom = "Orréa"
         jour_mois = 1
@@ -85,7 +84,6 @@ def get_lumharel_date():
     jour_semaine_index = (jours_ecoules - 1) % 8
     jour_semaine = jours_complet[jour_semaine_index]
 
-    # Calcul des phases lunaires
     jours_depuis_ref = (date_actuelle - date_reference).days
     phase_astraelis = phases_lunaires[(jours_depuis_ref % jours_cycle_astraelis) // 4]
     phase_vorna = phases_lunaires[(jours_depuis_ref % jours_cycle_vorna) // 6]
