@@ -5,18 +5,18 @@ import datetime
 import random
 import pytz
 
-# 🔥 Configuration
-TOKEN = os.getenv("TOKEN")  
-CHANNEL_ID = 1348851808549867602  
+# 🔥 Configuration du bot
+TOKEN = os.getenv("TOKEN")
+CHANNEL_ID = 1348851808549867602
 
-POST_HOUR = 10  
-POST_MINUTE = 30  
+POST_HOUR = 10  # Heure d'envoi du message
+POST_MINUTE = 30
 
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# 📅 Jours & Mois
+# 📅 Jours & Mois de Lumharel
 jours_complet = ["Tellion", "Sildrien", "Vaeldris", "Nythariel", "Zorvael", "Luméon", "Kaelios", "Eldrith"]
 jours_abbr = ["Tel", "Sil", "Vae", "Nyt", "Zor", "Lum", "Kae", "Eld"]
 mois_noms = ["Orréa", "Thiloris", "Vækirn", "Dornis", "Solvannar", "Velkaris", "Nytheris", "Varneth", "Elthiris", "Zorvahl", "Draknar", "Umbraël", "Aëldrin", "Kaelthor", "Eldros"]
@@ -27,12 +27,11 @@ mois_durees = {
 }
 
 # 🌙 Phases Lunaires
-phases_astraelis = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]  
-phases_vorna = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]  
+phases_lune = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]  # 8 phases de lune
 
 # 📌 Référence de départ
-date_reference = datetime.date(2025, 3, 12)  
-lumharel_reference = {"mois": "Vækirn", "jour": 7}  
+date_reference = datetime.date(2025, 3, 12)
+lumharel_reference = {"mois": "Vækirn", "jour": 7}
 
 # 🎉 Festivités
 festivites = {
@@ -50,10 +49,10 @@ festivites = {
 def get_lumharel_date():
     """ Calcule la date et les phases lunaires """
     date_actuelle = datetime.date.today()
-    jours_ecoules = (date_actuelle - date_reference).days  
+    jours_ecoules = (date_actuelle - date_reference).days
 
     # 🔹 Jour de la semaine
-    jour_semaine_index = (jours_ecoules + 6) % 8  
+    jour_semaine_index = (jours_ecoules + 6) % 8
     jour_semaine = jours_complet[jour_semaine_index]
 
     # 🔹 Calcul du mois et du jour
@@ -64,7 +63,7 @@ def get_lumharel_date():
     while jours_depuis_ref > 0:
         duree_mois = mois_durees[mois_nom]
         if mois_nom == "Eldros" and (date_actuelle.year - date_reference.year) % 2 == 0:
-            duree_mois += 1  
+            duree_mois += 1  # Ajout du 33e jour tous les 2 ans
 
         if jour_mois + jours_depuis_ref <= duree_mois:
             jour_mois += jours_depuis_ref
@@ -74,13 +73,38 @@ def get_lumharel_date():
             mois_nom = mois_noms[(mois_noms.index(mois_nom) + 1) % len(mois_noms)]
             jour_mois = 1
 
-    # 🔹 Calcul des phases lunaires
-    phase_astraelis = phases_astraelis[(jours_ecoules % 32) // 4]  
-    phase_vorna = phases_vorna[(jours_ecoules % 48) // 6]  
+    # 🔹 Calcul des phases lunaires avec le bon cycle
+    phase_astraelis = phases_lune[(jours_ecoules % 32) // 4]  # Change tous les 4 jours
+    phase_vorna = phases_lune[(jours_ecoules % 48) // 6]  # Change tous les 6 jours
 
     festivite_du_jour = festivites.get((jour_mois, mois_nom), "Aucune")
 
     return mois_nom, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite_du_jour, date_actuelle
+
+# 🗓️ Génération du calendrier formaté
+def generate_calendar(mois_nom, jour_mois):
+    """ Génère le calendrier en tableau """
+    nb_jours = mois_durees[mois_nom]
+    calendrier = "\n\n"
+
+    # En-tête
+    calendrier += "   ".join([f"{abbr:^4}" for abbr in jours_abbr]) + "\n"
+    calendrier += "-" * 48 + "\n"
+
+    # Générer les jours du mois
+    ligne = ""
+    for i in range(1, nb_jours + 1):
+        if i == jour_mois:
+            ligne += f"[{i:2}]   "  # Mettre le jour actuel entre []
+        else:
+            ligne += f" {i:2}    "
+
+        # Retour à la ligne après chaque semaine de 8 jours
+        if i % 8 == 0:
+            calendrier += ligne.rstrip() + "\n"
+            ligne = ""
+
+    return calendrier
 
 @bot.event
 async def on_ready():
@@ -98,7 +122,8 @@ async def send_daily_calendar():
 
 async def send_calendar_message(channel):
     mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
-    
+    calendrier_formatte = generate_calendar(mois, jour_mois)
+
     embed = discord.Embed(
         title="📜 Calendrier du Cycle des Souffles",
         description=f"📅 **Nous sommes le {jour_mois} ({jour_semaine}) de {mois}, 1532 - Ère du Cycle Unifié**\n\n"
@@ -107,6 +132,7 @@ async def send_calendar_message(channel):
     )
     embed.add_field(name="🎉 Festivité du jour", value=f"**{festivite}**", inline=True)
     embed.add_field(name="🌙 Phases lunaires", value=f"Astrealis : {phase_astraelis}\nVörna : {phase_vorna}", inline=True)
+    embed.add_field(name="🗓️ Mois en cours", value=f"```\n{calendrier_formatte}\n```", inline=False)
     embed.add_field(name="📅 Voir le calendrier complet", value="[🔗 Cliquez ici](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)", inline=False)
 
     await channel.send(embed=embed)
