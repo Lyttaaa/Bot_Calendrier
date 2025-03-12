@@ -87,16 +87,16 @@ def get_lumharel_date():
     mois_nom = mois_noms[mois_index]
     jour_semaine = jours_complet[(jour_mois - 1) % 8]  
 
-    # 🔹 Calcul des phases lunaires basées sur la référence
+    # 🔹 **Calcul des phases lunaires corrigé**
     jours_depuis_ref = (date_actuelle - ref_date_irl).days
 
-    # Astrealis (cycle de 32 jours, 8 phases)
-    phase_astraelis_index = (ref_phase_astraelis + jours_depuis_ref) % cycle_astraelis
-    phase_astraelis = phases_lune[(phase_astraelis_index * 8) // cycle_astraelis]
+    # Astrealis (cycle de 32 jours, 8 phases de 4 jours chacune)
+    phase_astraelis_index = (ref_phase_astraelis + (jours_depuis_ref // 4)) % 8
+    phase_astraelis = phases_lune[phase_astraelis_index]
 
-    # Vörna (cycle de 48 jours, 8 phases)
-    phase_vorna_index = (ref_phase_vorna + jours_depuis_ref) % cycle_vorna
-    phase_vorna = phases_lune[(phase_vorna_index * 8) // cycle_vorna]
+    # Vörna (cycle de 48 jours, 8 phases de 6 jours chacune)
+    phase_vorna_index = (ref_phase_vorna + (jours_depuis_ref // 6)) % 8
+    phase_vorna = phases_lune[phase_vorna_index]
 
     festivite_du_jour = festivites.get((jour_mois, mois_nom), "Aucune")
 
