@@ -5,7 +5,7 @@ import datetime
 import random
 import pytz
 
-TOKEN = os.getenv("TOKEN")  
+TOKEN = os.getenv("TOKEN")
 CHANNEL_ID = 1348851808549867602  
 
 POST_HOUR = 10  
@@ -15,7 +15,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Jours et mois du calendrier de Lumharel
+# Définition des jours et mois de Lumharel
 jours_complet = ["Tellion", "Sildrien", "Vaeldris", "Nythariel", "Zorvaël", "Luméon", "Kaelios", "Eldrith"]
 jours_abbr = ["Tel", "Sil", "Vae", "Nyt", "Zor", "Lum", "Kae", "Eld"]
 mois_noms = [
@@ -28,8 +28,8 @@ mois_durees = {
     "Draknar": 28, "Umbraël": 32, "Aëldrin": 32, "Kaelthor": 28, "Eldros": 32
 }
 
-# Nouvelle référence : 12 mars 2025 = 7 Kaelios de Vækirn 1532
-date_reference = datetime.date(2025, 3, 12)
+# **Définition de la date de référence** 
+date_reference = datetime.date(2025, 3, 12)  # = 7 Kaelios de Vækirn 1532
 jours_cycle_astraelis = 32
 jours_cycle_vorna = 48
 phases_lunaires = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
@@ -57,29 +57,31 @@ festivites = {
 }
 
 def get_lumharel_date():
-    """ Calcule la date actuelle dans le calendrier de Lumharel """
+    """ Calcule la date actuelle dans le calendrier de Lumharel en tenant compte des durées de mois irréguliers """
     date_actuelle = datetime.date.today()
-    jours_ecoules = (date_actuelle - date_reference).days  
+    jours_ecoules = (date_actuelle - date_reference).days  # Jours passés depuis 12 mars 2025
 
+    # Trouver le mois et le jour exact
     mois_nom = None
     jour_mois = None
-    jour_compte = jours_ecoules
+    jour_compte = (7 + jours_ecoules)  # On part du 7 Kaelios de Vækirn
 
-    for mois, duree in mois_durees.items():
+    for mois in mois_noms:
+        duree_mois = mois_durees[mois]
         if mois == "Eldros" and (date_actuelle.year - date_reference.year) % 2 == 0:
-            duree += 1  
+            duree_mois += 1  
 
-        if jour_compte < duree:
+        if jour_compte <= duree_mois:
             mois_nom = mois
-            jour_mois = jour_compte + 1
+            jour_mois = jour_compte
             break
-        jour_compte -= duree
+        jour_compte -= duree_mois
 
     if mois_nom is None or jour_mois is None:
         mois_nom = "Orréa"
         jour_mois = 1
 
-    jour_semaine_index = (jours_ecoules % 8)
+    jour_semaine_index = ((jours_ecoules + 7) % 8)
     jour_semaine = jours_complet[jour_semaine_index]
 
     jours_depuis_ref = (date_actuelle - date_reference).days
