@@ -11,8 +11,8 @@ print(f"🕒 [DEBUG] Heure système Railway : {datetime.datetime.now()}")
 TOKEN = os.getenv("TOKEN")
 CHANNEL_ID = 1348851808549867602  
 
-POST_HOUR = 10  
-POST_MINUTE = 30
+POST_HOUR = 11 
+POST_MINUTE = 00
 
 intents = discord.Intents.default()
 intents.message_content = True
