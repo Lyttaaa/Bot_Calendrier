@@ -115,6 +115,7 @@ def generate_calendar(mois_nom, jour_mois):
 @bot.event
 async def on_ready():
     print(f"✅ {bot.user} est connecté et actif !")
+    print(f"📌 [DEBUG] Commandes enregistrées : {[command.name for command in bot.commands]}")
     if not send_daily_calendar.is_running():
         send_daily_calendar.start()
 
