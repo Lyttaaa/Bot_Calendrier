@@ -26,12 +26,12 @@ mois_durees = {
     "Draknar": 28, "Umbraël": 32, "Aëldrin": 32, "Kaelthor": 28, "Eldros": 32
 }
 
-# 🌙 Phases Lunaires
-phases_lune = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]  # 8 phases de lune
+# 🌙 Phases Lunaires (8 phases)
+phases_lune = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
 
 # 📌 Référence de départ
-date_reference = datetime.date(2025, 3, 12)
-lumharel_reference = {"mois": "Vækirn", "jour": 7}
+date_reference = datetime.date(2025, 3, 12)  # Date IRL de référence
+lumharel_reference = {"mois": "Vækirn", "jour": 7}  # Date dans Lumharel
 
 # 🎉 Festivités
 festivites = {
@@ -45,7 +45,7 @@ festivites = {
     (1, "Aëldrin"): "Grande Récitation"
 }
 
-# 📅 Calcul de la Date de Lumharel
+# 📅 Calcul de la Date & des Phases Lunaires
 def get_lumharel_date():
     """ Calcule la date et les phases lunaires """
     date_actuelle = datetime.date.today()
@@ -73,9 +73,9 @@ def get_lumharel_date():
             mois_nom = mois_noms[(mois_noms.index(mois_nom) + 1) % len(mois_noms)]
             jour_mois = 1
 
-    # 🔹 Calcul des phases lunaires avec le bon cycle
-    phase_astraelis = phases_lune[(jours_ecoules % 32) // 4]  # Change tous les 4 jours
-    phase_vorna = phases_lune[(jours_ecoules % 48) // 6]  # Change tous les 6 jours
+    # 🌙 **Calcul des phases lunaires avec précision**
+    phase_astraelis = phases_lune[(jours_ecoules % 32) // 4]  # 1 phase = 4 jours
+    phase_vorna = phases_lune[(jours_ecoules % 48) // 6]  # 1 phase = 6 jours
 
     festivite_du_jour = festivites.get((jour_mois, mois_nom), "Aucune")
 
