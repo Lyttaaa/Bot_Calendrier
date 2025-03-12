@@ -145,5 +145,24 @@ async def send_calendar_message(channel):
 async def calendrier(ctx):
     """ Affiche la date et le calendrier en temps réel """
     await send_calendar_message(ctx.channel)
+@bot.event
+async def on_ready():
+    print(f"✅ {bot.user} est connecté et actif !")
 
+    # Vérification du channel
+    channel = bot.get_channel(CHANNEL_ID)
+    if channel:
+        print(f"📌 [DEBUG] Message automatique prévu dans : {channel.name} (ID: {CHANNEL_ID})")
+    else:
+        print("❌ [ERROR] Impossible de trouver le channel. Vérifie l'ID.")
+
+    # Vérification de l'heure d'envoi
+    print(f"⏰ [DEBUG] L'envoi automatique est prévu à {POST_HOUR:02d}:{POST_MINUTE:02d} heure locale.")
+
+    # Démarrer la tâche d'envoi automatique si elle n'est pas déjà active
+    if not send_daily_calendar.is_running():
+        send_daily_calendar.start()
+        print("⏳ [DEBUG] Envoi automatique activé.")
+    else:
+        print("⚠️ [DEBUG] La tâche d'envoi est déjà en cours.")
 bot.run(TOKEN)
