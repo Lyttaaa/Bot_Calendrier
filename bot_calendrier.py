@@ -47,45 +47,44 @@ festivites = {
 
 # 📅 Calcul de la Date & des Phases Lunaires
 def get_lumharel_date():
-    """ Calcule la date dans le calendrier de Lumharel et les phases lunaires en fonction du 12/03/2025 """
-    
-    date_actuelle = datetime.date.today()  # Date réelle d'aujourd'hui
-    date_reference = datetime.date(2025, 3, 12)  # Référence du 12 mars 2025
-    
-    jour_total_depuis_reference = (date_actuelle - date_reference).days
+    """ Calcule la date dans le calendrier de Lumharel et les festivités associées """
 
-    # 🔹 Déterminer le mois et le jour en fonction des durées irrégulières des mois
-    jours_par_mois = {
+    date_actuelle = datetime.date.today()
+    jour_annee = (date_actuelle - datetime.date(2025, 3, 12)).days + 7  # Définir le 12 mars 2025 comme base
+
+    # Détermination du mois et du jour du mois
+    mois_durees = {
         "Orréa": 32, "Thiloris": 28, "Vækirn": 32, "Dornis": 32, "Solvannar": 32,
         "Velkaris": 28, "Nytheris": 32, "Varneth": 28, "Elthiris": 32, "Zorvahl": 32,
         "Draknar": 28, "Umbraël": 32, "Aëldrin": 32, "Kaelthor": 28, "Eldros": 32
     }
 
-    jours_cumules = 0
-    mois_nom, jour_mois = None, None
+    jours_total = sum(mois_durees.values())
+    jour_annee = jour_annee % jours_total  # Boucle l'année en Lumharel
 
-    for mois, jours in jours_par_mois.items():
-        if jours_cumules + jours > jour_total_depuis_reference % 416:
+    mois_nom = None
+    jours_ecoules = 0
+    for mois, duree in mois_durees.items():
+        if jour_annee < jours_ecoules + duree:
             mois_nom = mois
-            jour_mois = (jour_total_depuis_reference % 416) - jours_cumules + 1
+            jour_mois = jour_annee - jours_ecoules + 1
             break
-        jours_cumules += jours
+        jours_ecoules += duree
 
-    # 🔹 Déterminer le jour de la semaine
-    jour_semaine_index = (jour_total_depuis_reference % 8)
-    jour_semaine = jours_complet[jour_semaine_index]
+    jour_semaine = jours_complet[jour_annee % len(jours_complet)]  # Rotation sur 8 jours
 
-    # 🔹 Calcul des phases lunaires à partir du 12/03/2025 comme référence
-    phase_astraelis_index = (jour_total_depuis_reference % 32) // 4  # 8 phases de 4 jours
-    phase_vorna_index = (jour_total_depuis_reference % 48) // 6  # 8 phases de 6 jours
+    # Définition des phases lunaires
+    cycle_astraelis = 32
+    cycle_vorna = 48
+    phases_lune = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
 
-    phase_astraelis = phases_astraelis[phase_astraelis_index]
-    phase_vorna = phases_vorna[phase_vorna_index]
+    phase_astraelis = phases_lune[jour_annee % cycle_astraelis % len(phases_lune)]
+    phase_vorna = phases_lune[jour_annee % cycle_vorna % len(phases_lune)]
 
-    # 🔹 Vérifier les festivités
     festivite_du_jour = festivites.get((jour_mois, mois_nom), "Aucune")
 
     return mois_nom, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite_du_jour, date_actuelle
+
     
 # 🗓️ Génération du calendrier formaté
 def generate_calendar(mois_nom, jour_mois):
