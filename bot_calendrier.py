@@ -16,6 +16,13 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+# Messages immersifs
+messages_accueil = [
+    "✨ Que les vents de Lumharel vous soient favorables !",
+    "🌙 Que la lumière des lunes vous guide en cette journée !",
+    "🔥 Puisse la flamme de Vaek illuminer votre chemin !",
+    "🌿 Que les murmures des anciens Façonneurs vous inspirent aujourd’hui !"
+]
 # 📅 Jours & Mois de Lumharel
 jours_complet = ["Tellion", "Sildrien", "Vaeldris", "Nythariel", "Zorvael", "Luméon", "Kaelios", "Eldrith"]
 jours_abbr = ["Tel", "Sil", "Vae", "Nyt", "Zor", "Lum", "Kae", "Eld"]
