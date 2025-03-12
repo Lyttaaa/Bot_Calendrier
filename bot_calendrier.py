@@ -31,7 +31,7 @@ mois_durees = {
 def is_bissextile(year):
     return year % 2 == 0
 
-# Point de départ du calendrier : 1er Tellion d'Orréa 1532 correspond au 1er mars 2025
+# Point de départ : 1er Tellion d'Orréa 1532 = 1er mars 2025
 date_reference = datetime.date(2025, 3, 1)  
 jours_cycle_astraelis = 32
 jours_cycle_vorna = 48
@@ -71,9 +71,9 @@ def get_lumharel_date():
         if mois == "Eldros" and is_bissextile(date_actuelle.year):
             duree += 1  
 
-        if jour_compte <= duree:
+        if jour_compte < duree:
             mois_nom = mois
-            jour_mois = jour_compte
+            jour_mois = jour_compte + 1
             break
         jour_compte -= duree
 
@@ -81,7 +81,7 @@ def get_lumharel_date():
         mois_nom = "Orréa"
         jour_mois = 1
 
-    jour_semaine_index = (jours_ecoules - 1) % 8
+    jour_semaine_index = (jours_ecoules % 8)
     jour_semaine = jours_complet[jour_semaine_index]
 
     jours_depuis_ref = (date_actuelle - date_reference).days
