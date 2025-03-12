@@ -86,6 +86,7 @@ def get_lumharel_date():
     festivite_du_jour = festivites.get((jour_mois, mois_nom), "Aucune")
 
     return mois_nom, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite_du_jour, date_actuelle
+    
 # 🗓️ Génération du calendrier formaté
 def generate_calendar(mois_nom, jour_mois):
     """ Génère le calendrier en tableau """
