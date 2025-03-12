@@ -11,8 +11,8 @@ print(f"🕒 [DEBUG] Heure système Railway : {datetime.datetime.now()}")
 TOKEN = os.getenv("TOKEN")
 CHANNEL_ID = 1348851808549867602  
 
-POST_HOUR = 11 
-POST_MINUTE = 00
+POST_HOUR = 11  
+POST_MINUTE = 00  
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -29,10 +29,12 @@ mois_durees = {
 }
 mois_noms = list(mois_durees.keys())
 
-# Phases lunaires (cycle basé sur le 12 mars 2025 comme référence)
+# Phases lunaires (8 phases)
 phases_lune = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
 cycle_astraelis = 32  
 cycle_vorna = 48  
+
+# Références pour la correspondance des dates
 ref_date_irl = datetime.date(2025, 3, 12)  
 ref_date_lumharel = (7, "Vækirn", 1532)  
 
@@ -58,7 +60,7 @@ festivites = {
 
 ### 🔹 **Convertir la date IRL en date Lumharel**
 def get_lumharel_date():
-    """ Calcule la date en Lumharel à partir de la date IRL du 12 mars 2025 comme référence. """
+    """ Calcule la date en Lumharel en prenant comme référence le 12 mars 2025. """
     date_actuelle = datetime.date.today()
     delta_jours = (date_actuelle - ref_date_irl).days  
 
@@ -83,40 +85,20 @@ def get_lumharel_date():
     mois_nom = mois_noms[mois_index]
     jour_semaine = jours_complet[(jour_mois - 1) % 8]  
 
-    # 🔹 Calcul des phases lunaires basées sur le 12 mars 2025 comme référence
+    # 🔹 Calcul des phases lunaires basées sur la référence
     jours_depuis_ref = (date_actuelle - ref_date_irl).days
 
     # Astrealis (cycle de 32 jours, 8 phases)
-    phase_astraelis_index = (jours_depuis_ref % 32)  # Position dans le cycle de 32 jours
-    phase_astraelis = phases_lune[(phase_astraelis_index * 8) // 32]  # Converti en phase
+    phase_astraelis_index = (jours_depuis_ref % cycle_astraelis) * len(phases_lune) // cycle_astraelis
+    phase_astraelis = phases_lune[phase_astraelis_index]
 
     # Vörna (cycle de 48 jours, 8 phases)
-    phase_vorna_index = (jours_depuis_ref % 48)  # Position dans le cycle de 48 jours
-    phase_vorna = phases_lune[(phase_vorna_index * 8) // 48]  # Converti en phase
+    phase_vorna_index = (jours_depuis_ref % cycle_vorna) * len(phases_lune) // cycle_vorna
+    phase_vorna = phases_lune[phase_vorna_index]
 
     festivite_du_jour = festivites.get((jour_mois, mois_nom), "Aucune")
 
     return mois_nom, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite_du_jour, date_actuelle
-
-### 🔹 **Générer le calendrier sous forme de tableau**
-def generate_calendar(mois_nom, jour_mois):
-    calendrier = "\n\n"
-    calendrier += "   ".join([f"{abbr:^4}" for abbr in jours_abbr]) + "\n"
-    calendrier += "-" * 48 + "\n"
-
-    nb_jours = mois_durees[mois_nom]
-    ligne = ""
-    for i in range(1, nb_jours + 1):
-        if i == jour_mois:
-            ligne += f"[{i:2}]   "
-        else:
-            ligne += f" {i:2}    "
-
-        if i % 8 == 0:
-            calendrier += ligne.rstrip() + "\n"
-            ligne = ""
-
-    return calendrier
 
 ### 🔹 **Envoi automatique**
 @tasks.loop(seconds=60)
@@ -131,7 +113,6 @@ async def send_daily_calendar():
 async def send_calendar_message(channel):
     mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
     message_immersion = random.choice(messages_accueil)
-    calendrier_formatte = generate_calendar(mois, jour_mois)
 
     embed = discord.Embed(
         title="📜 Calendrier du Cycle des Souffles",
@@ -143,7 +124,7 @@ async def send_calendar_message(channel):
 
     embed.add_field(name="🎉 Festivité", value=f"**{festivite}**", inline=True)
     embed.add_field(name="🌙 Phases lunaires", value=f"Astrealis : {phase_astraelis} | Vörna : {phase_vorna}", inline=True)
-    embed.add_field(name="🗓️ Mois en cours", value=f"```\n{calendrier_formatte}\n```", inline=False)
+    embed.add_field(name="📅 Voir le calendrier complet", value="[🔗 Cliquez ici](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)", inline=False)
 
     await channel.send(embed=embed)
 
@@ -151,24 +132,21 @@ async def send_calendar_message(channel):
 async def calendrier(ctx):
     """ Affiche la date et le calendrier en temps réel """
     await send_calendar_message(ctx.channel)
+
 @bot.event
 async def on_ready():
     print(f"✅ {bot.user} est connecté et actif !")
 
-    # Vérification du channel
     channel = bot.get_channel(CHANNEL_ID)
     if channel:
         print(f"📌 [DEBUG] Message automatique prévu dans : {channel.name} (ID: {CHANNEL_ID})")
     else:
         print("❌ [ERROR] Impossible de trouver le channel. Vérifie l'ID.")
 
-    # Vérification de l'heure d'envoi
     print(f"⏰ [DEBUG] L'envoi automatique est prévu à {POST_HOUR:02d}:{POST_MINUTE:02d} heure locale.")
 
-    # Démarrer la tâche d'envoi automatique si elle n'est pas déjà active
     if not send_daily_calendar.is_running():
         send_daily_calendar.start()
         print("⏳ [DEBUG] Envoi automatique activé.")
-    else:
-        print("⚠️ [DEBUG] La tâche d'envoi est déjà en cours.")
+
 bot.run(TOKEN)
