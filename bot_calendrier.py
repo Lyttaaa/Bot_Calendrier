@@ -29,7 +29,8 @@ mois_durees = {
 }
 
 # **Définition de la date de référence** 
-date_reference = datetime.date(2025, 3, 12)  # = 7 Kaelios de Vækirn 1532
+date_reference = datetime.date(2025, 3, 12)  # = 7 Vaeldris de Vækirn 1532
+
 jours_cycle_astraelis = 32
 jours_cycle_vorna = 48
 phases_lunaires = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
@@ -59,34 +60,33 @@ festivites = {
 def get_lumharel_date():
     """ Calcule la date actuelle dans le calendrier de Lumharel en tenant compte des durées de mois irréguliers """
     date_actuelle = datetime.date.today()
-    jours_ecoules = (date_actuelle - date_reference).days  # Jours passés depuis 12 mars 2025
+    jours_ecoules = (date_actuelle - date_reference).days  
 
     # Trouver le mois et le jour exact
     mois_nom = None
     jour_mois = None
-    jour_compte = (7 + jours_ecoules)  # On part du 7 Kaelios de Vækirn
-
-    for mois in mois_noms:
-        duree_mois = mois_durees[mois]
-        if mois == "Eldros" and (date_actuelle.year - date_reference.year) % 2 == 0:
-            duree_mois += 1  
-
-        if jour_compte <= duree_mois:
-            mois_nom = mois
-            jour_mois = jour_compte
-            break
-        jour_compte -= duree_mois
-
-    if mois_nom is None or jour_mois is None:
-        mois_nom = "Orréa"
-        jour_mois = 1
-
-    jour_semaine_index = ((jours_ecoules + 7) % 8)
+    jour_semaine_index = (jours_ecoules + 2) % 8  # Décalage pour correspondre au 7 Vaeldris
     jour_semaine = jours_complet[jour_semaine_index]
 
     jours_depuis_ref = (date_actuelle - date_reference).days
     phase_astraelis = phases_lunaires[(jours_depuis_ref % jours_cycle_astraelis) // 4]
     phase_vorna = phases_lunaires_vorna[(jours_depuis_ref % jours_cycle_vorna) // 6]
+
+    jour_compte = 7  
+    for mois in mois_noms:
+        duree_mois = mois_durees[mois]
+        if mois == "Eldros" and (date_actuelle.year - date_reference.year) % 2 == 0:
+            duree_mois += 1  
+
+        if jours_ecoules < duree_mois:
+            mois_nom = mois
+            jour_mois = jours_ecoules + 1
+            break
+        jours_ecoules -= duree_mois
+
+    if mois_nom is None or jour_mois is None:
+        mois_nom = "Orréa"
+        jour_mois = 1
 
     festivite_du_jour = festivites.get((jour_mois, mois_nom), "Aucune")
 
@@ -149,7 +149,7 @@ async def send_calendar_message(channel):
     )
 
     embed.add_field(name="🎉 Festivité du jour", value=f"**{festivite}**", inline=True)
-    embed.add_field(name="🌙 Phases lunaires", value=f"Astraelis : {phase_astraelis}\nVörna : {phase_vorna}", inline=True)
+    embed.add_field(name="🌙 Phases lunaires", value=f"Astrealis : {phase_astraelis}\nVörna : {phase_vorna}", inline=True)
     embed.add_field(name="🗓️ Mois en cours", value=f"```\n{calendrier_formatte}\n```", inline=False)
 
     await channel.send(embed=embed)
