@@ -84,15 +84,15 @@ def get_lumharel_date():
     jour_semaine = jours_complet[(jour_mois - 1) % 8]  
 
     # 🔹 Calcul des phases lunaires basées sur le 12 mars 2025 comme référence
-jours_depuis_ref = (date_actuelle - ref_date_irl).days
+    jours_depuis_ref = (date_actuelle - ref_date_irl).days
 
-# Astrealis (cycle de 32 jours, 8 phases)
-phase_astraelis_index = (jours_depuis_ref % 32)  # Position dans le cycle de 32 jours
-phase_astraelis = phases_lune[(phase_astraelis_index * 8) // 32]  # Converti en phase
+    # Astrealis (cycle de 32 jours, 8 phases)
+    phase_astraelis_index = (jours_depuis_ref % 32)  # Position dans le cycle de 32 jours
+    phase_astraelis = phases_lune[(phase_astraelis_index * 8) // 32]  # Converti en phase
 
-# Vörna (cycle de 48 jours, 8 phases)
-phase_vorna_index = (jours_depuis_ref % 48)  # Position dans le cycle de 48 jours
-phase_vorna = phases_lune[(phase_vorna_index * 8) // 48]  # Converti en phase
+    # Vörna (cycle de 48 jours, 8 phases)
+    phase_vorna_index = (jours_depuis_ref % 48)  # Position dans le cycle de 48 jours
+    phase_vorna = phases_lune[(phase_vorna_index * 8) // 48]  # Converti en phase
 
     festivite_du_jour = festivites.get((jour_mois, mois_nom), "Aucune")
 
