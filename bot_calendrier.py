@@ -62,16 +62,16 @@ def get_lumharel_date():
     date_actuelle = datetime.date.today()
     jours_ecoules = (date_actuelle - date_reference).days  
 
-    # Trouver le mois et le jour exact
     mois_nom = None
     jour_mois = None
     jour_semaine_index = (jours_ecoules + 2) % 8  # Décalage pour correspondre au 7 Vaeldris
     jour_semaine = jours_complet[jour_semaine_index]
 
-    jours_depuis_ref = (date_actuelle - date_reference).days
+    jours_depuis_ref = jours_ecoules
     phase_astraelis = phases_lunaires[(jours_depuis_ref % jours_cycle_astraelis) // 4]
     phase_vorna = phases_lunaires_vorna[(jours_depuis_ref % jours_cycle_vorna) // 6]
 
+    # **Calcul du mois et du jour exact**
     jour_compte = 7  
     for mois in mois_noms:
         duree_mois = mois_durees[mois]
@@ -83,10 +83,6 @@ def get_lumharel_date():
             jour_mois = jours_ecoules + 1
             break
         jours_ecoules -= duree_mois
-
-    if mois_nom is None or jour_mois is None:
-        mois_nom = "Orréa"
-        jour_mois = 1
 
     festivite_du_jour = festivites.get((jour_mois, mois_nom), "Aucune")
 
