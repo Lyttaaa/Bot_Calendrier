@@ -5,9 +5,6 @@ import datetime
 import random
 import pytz
 
-# Vérification de l'heure système
-print(f"🕒 [DEBUG] Heure système Railway : {datetime.datetime.now()}")
-
 TOKEN = os.getenv("TOKEN")  
 CHANNEL_ID = 1348851808549867602  
 
@@ -31,13 +28,14 @@ mois_durees = {
     "Draknar": 28, "Umbraël": 32, "Aëldrin": 32, "Kaelthor": 28, "Eldros": 32
 }
 
-# Gestion des années bissextiles pour Eldros (ajoute un 33e jour tous les 2 ans)
 def is_bissextile(year):
     return year % 2 == 0
 
-# Phases des lunes
-phases_astraelis = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
-phases_vorna = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
+# Référence pour le calcul des phases lunaires
+date_reference = datetime.date(1532, 1, 19)  # 19 Orréa 1532
+jours_cycle_astraelis = 32
+jours_cycle_vorna = 48
+phases_lunaires = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
 
 # Messages immersifs
 messages_accueil = [
@@ -61,37 +59,38 @@ festivites = {
 }
 
 def get_lumharel_date():
-    """ Calcule la date dans le calendrier de Lumharel """
+    """ Calcule la date actuelle dans le calendrier de Lumharel """
     date_actuelle = datetime.date.today()
-    jour_annee = date_actuelle.timetuple().tm_yday
-    annee_actuelle = date_actuelle.year
+    jours_ecoules = (date_actuelle - datetime.date(1532, 1, 1)).days  
 
-    jour_de_l_annee = jour_annee
     mois_nom = None
     jour_mois = None
+    jour_compte = jours_ecoules
 
     for mois, duree in mois_durees.items():
-        if mois == "Eldros" and is_bissextile(annee_actuelle):
+        if mois == "Eldros" and is_bissextile(date_actuelle.year):
             duree += 1  
 
-        if jour_de_l_annee <= duree:
+        if jour_compte <= duree:
             mois_nom = mois
-            jour_mois = jour_de_l_annee
+            jour_mois = jour_compte
             break
-        jour_de_l_annee -= duree
+        jour_compte -= duree
 
-    jour_semaine_index = (jour_annee - 1) % 8
+    jour_semaine_index = (jours_ecoules - 1) % 8
     jour_semaine = jours_complet[jour_semaine_index]
 
-    phase_astraelis = phases_astraelis[jour_annee % len(phases_astraelis)]
-    phase_vorna = phases_vorna[jour_annee % len(phases_vorna)]
+    # Calcul des phases lunaires
+    jours_depuis_ref = (date_actuelle - date_reference).days
+    phase_astraelis = phases_lunaires[(jours_depuis_ref % jours_cycle_astraelis) // 4]
+    phase_vorna = phases_lunaires[(jours_depuis_ref % jours_cycle_vorna) // 6]
 
     festivite_du_jour = festivites.get((jour_mois, mois_nom), "Aucune")
 
     return mois_nom, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite_du_jour, date_actuelle
 
 def generate_calendar(mois_nom, jour_mois):
-    """ Génère la mise en forme du calendrier sous forme de tableau """
+    """ Génère le tableau du calendrier """
     nb_jours = mois_durees[mois_nom]
     calendrier = "\n\n"
 
