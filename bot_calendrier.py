@@ -28,14 +28,12 @@ mois_durees = {
     "Draknar": 28, "Umbraël": 32, "Aëldrin": 32, "Kaelthor": 28, "Eldros": 32
 }
 
-def is_bissextile(year):
-    return year % 2 == 0
-
-# Point de départ : 1er Tellion d'Orréa 1532 = 1er mars 2025
-date_reference = datetime.date(2025, 3, 1)  
+# Nouvelle référence : 12 mars 2025 = 7 Kaelios de Vækirn 1532
+date_reference = datetime.date(2025, 3, 12)
 jours_cycle_astraelis = 32
 jours_cycle_vorna = 48
 phases_lunaires = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
+phases_lunaires_vorna = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
 
 # Messages immersifs
 messages_accueil = [
@@ -68,7 +66,7 @@ def get_lumharel_date():
     jour_compte = jours_ecoules
 
     for mois, duree in mois_durees.items():
-        if mois == "Eldros" and is_bissextile(date_actuelle.year):
+        if mois == "Eldros" and (date_actuelle.year - date_reference.year) % 2 == 0:
             duree += 1  
 
         if jour_compte < duree:
@@ -86,7 +84,7 @@ def get_lumharel_date():
 
     jours_depuis_ref = (date_actuelle - date_reference).days
     phase_astraelis = phases_lunaires[(jours_depuis_ref % jours_cycle_astraelis) // 4]
-    phase_vorna = phases_lunaires[(jours_depuis_ref % jours_cycle_vorna) // 6]
+    phase_vorna = phases_lunaires_vorna[(jours_depuis_ref % jours_cycle_vorna) // 6]
 
     festivite_du_jour = festivites.get((jour_mois, mois_nom), "Aucune")
 
