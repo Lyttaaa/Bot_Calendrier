@@ -146,6 +146,32 @@ async def send_calendar_message(channel):
 
 @bot.command(name="calendrier")
 async def calendrier(ctx):
-    await send_calendar_message(ctx.channel)
+    """ Affiche la date et le calendrier en temps réel """
+    try:
+        print("📌 [DEBUG] Commande !calendrier reçue.")  # Vérification terminal
+
+        mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
+        message_immersion = random.choice(messages_accueil)
+        calendrier_formatte = generate_calendar(mois, jour_mois)
+
+        embed = discord.Embed(
+            title="📜 Calendrier du Cycle des Souffles",
+            description=f"📅 **Nous sommes le {jour_mois} ({jour_semaine}) de {mois}, 1532 - Ère du Cycle Unifié**\n\n"
+                        f"📆 *Correspondance IRL : {date_reelle.strftime('%d/%m/%Y')}*\n\n"
+                        f"{message_immersion}",
+            color=0xFFD700
+        )
+
+        embed.add_field(name="🎉 Festivité du jour", value=f"**{festivite}**", inline=True)
+        embed.add_field(name="🌙 Phases lunaires", value=f"Astrealis : {phase_astraelis}\nVörna : {phase_vorna}", inline=True)
+
+        embed.add_field(name="🗓️ Mois en cours", value=f"```\n{calendrier_formatte}\n```", inline=False)
+        embed.add_field(name="📅 Voir le calendrier complet", value="[🔗 Cliquez ici](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)", inline=False)
+
+        await ctx.send(embed=embed)
+        print("✅ [DEBUG] Message du calendrier envoyé.")
+
+    except Exception as e:
+        print(f"❌ [ERROR] Erreur lors de l'exécution de !calendrier : {e}")
 
 bot.run(TOKEN)
