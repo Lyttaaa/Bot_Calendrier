@@ -77,6 +77,11 @@ def get_lumharel_date():
             break
         jour_compte -= duree
 
+    # Sécurité pour éviter un KeyError
+    if mois_nom is None or jour_mois is None:
+        mois_nom = "Orréa"
+        jour_mois = 1
+
     jour_semaine_index = (jours_ecoules - 1) % 8
     jour_semaine = jours_complet[jour_semaine_index]
 
@@ -91,7 +96,7 @@ def get_lumharel_date():
 
 def generate_calendar(mois_nom, jour_mois):
     """ Génère le tableau du calendrier """
-    nb_jours = mois_durees[mois_nom]
+    nb_jours = mois_durees.get(mois_nom, 32)
     calendrier = "\n\n"
 
     calendrier += "   ".join([f"{abbr:^4}" for abbr in jours_abbr]) + "\n"
@@ -147,10 +152,7 @@ async def send_calendar_message(channel):
 
     embed.add_field(name="🎉 Festivité du jour", value=f"**{festivite}**", inline=True)
     embed.add_field(name="🌙 Phases lunaires", value=f"Astraelis : {phase_astraelis}\nVörna : {phase_vorna}", inline=True)
-
     embed.add_field(name="🗓️ Mois en cours", value=f"```\n{calendrier_formatte}\n```", inline=False)
-
-    embed.add_field(name="📅 Voir le calendrier complet", value="[🔗 Cliquez ici](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)", inline=False)
 
     await channel.send(embed=embed)
 
