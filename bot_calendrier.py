@@ -49,25 +49,34 @@ messages_accueil = [
 ]
 
 # Festivités fixes
-festivites = {
-    (1, "Orréa"): "Solstice du Grand Réveil",
-    (19, "Orréa"): "Fête des Pattes Mouillées",
-    (28, "Thiloris"): "Sillons Chuchotants",
-    (15, "Vækirn"): "Festival des Flammes",
-    (9, "Dornis"): "Cendres Joyeuses",
-    (21, "Dornis"): "Jeux de la Flamme Tournante",
-    (16, "Umbraël"): "Nuit de la Lune Noire",
-    (31, "Nytheris"): "Nuit des Légendes",
-    (8, "Varneth"): "Bal des Errants",
-    (17, "Elthiris"): "Festival des Rouleaux Volants",
-    (3, "Draknar"): "Veillée des Ombres",
-    (12, "Umbraël"): "Nuit des Mille Lueurs",
-    (18, "Umbraël"): "Fête des Échos Perdus",
-    (7, "Kaelithor"): "Grande Récitation",
-    (15, "Kaelithor"): "Jour des Fragments de Rêves",
-    (26, "Eldros"): "Chant du Dernier Souffle",
-    (26, "Eldros"): "Chant du Dernier Souffle",
-}
+festivites = [
+    ((1, "Orréa"), (3, "Orréa"), "Solstice du Grand Réveil"),
+    ((19, "Orréa"), (19, "Orréa"), "Fête des Pattes Mouillées"),
+    ((28, "Thiloris"), (28, "Thiloris"), "Sillons Chuchotants"),
+    ((15, "Vækirn"), (17, "Vækirn"), "Festival des Flammes"),
+    ((9, "Dornis"), (9, "Dornis"), "Cendres Joyeuses"),
+    ((21, "Dornis"), (21, "Dornis"), "Jeux de la Flamme Tournante"),
+    ((16, "Umbraël"), (16, "Umbraël"), "Nuit de la Lune Noire"),
+    ((31, "Nytheris"), (1, "Varneth"), "Nuit des Légendes"),
+    ((8, "Varneth"), (8, "Varneth"), "Bal des Errants"),
+    ((17, "Elthiris"), (17, "Elthiris"), "Festival des Rouleaux Volants"),
+    ((3, "Draknar"), (6, "Draknar"), "Veillée des Ombres"),
+    ((12, "Umbraël"), (12, "Umbraël"), "Nuit des Mille Lueurs"),
+    ((18, "Umbraël"), (18, "Umbraël"), "Fête des Échos Perdus"),
+    ((7, "Kaelthor"), (10, "Kaelthor"), "Grande Récitation"),
+    ((15, "Kaelthor"), (15, "Kaelthor"), "Jour des Fragments de Rêves"),
+    ((26, "Eldros"), (26, "Eldros"), "Chant du Dernier Souffle")
+]
+def get_festivite_du_jour(jour, mois):
+    for (start_day, start_month), (end_day, end_month), nom in festivites:
+        if mois == start_month == end_month:
+            if start_day <= jour <= end_day:
+                return nom
+        elif mois == start_month and jour >= start_day:
+            return nom
+        elif mois == end_month and jour <= end_day:
+            return nom
+    return "Aucune"
 
 ### 🔹 **Convertir la date IRL en date Lumharel**
 def get_lumharel_date():
@@ -107,7 +116,7 @@ def get_lumharel_date():
     phase_vorna_index = (ref_phase_vorna + (jours_depuis_ref // 6)) % 8
     phase_vorna = phases_lune[phase_vorna_index]
 
-    festivite_du_jour = festivites.get((jour_mois, mois_nom), "Aucune")
+    festivite_du_jour = get_festivite_du_jour(jour_mois, mois_nom)
 
     return mois_nom, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite_du_jour, date_actuelle
 
