@@ -51,7 +51,7 @@ messages_accueil = [
 # Festivités fixes
 festivites = {
     (1, "Orréa"): "Solstice du Grand Réveil",
-    (19, "Orréa"): "Fête des Pattes",
+    (19, "Orréa"): "Fête des Pattes Mouillées",
     (28, "Thiloris"): "Sillons Chuchotants",
     (15, "Vækirn"): "Festival des Flammes",
     (9, "Dornis"): "Cendres Joyeuses",
@@ -64,7 +64,7 @@ festivites = {
     (12, "Umbraël"): "Nuit des Mille Lueurs",
     (18, "Umbraël"): "Fête des Échos Perdus",
     (7, "Kaelithor"): "Grande Récitation",
-    (10, "Kaelithor"): "Jour des Fragments de Rêves",
+    (15, "Kaelithor"): "Jour des Fragments de Rêves",
     (26, "Eldros"): "Chant du Dernier Souffle",
     (26, "Eldros"): "Chant du Dernier Souffle",
 }
