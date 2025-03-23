@@ -51,13 +51,22 @@ messages_accueil = [
 # Festivités fixes
 festivites = {
     (1, "Orréa"): "Solstice du Grand Réveil",
+    (19, "Orréa"): "Fête des Pattes",
+    (28, "Thiloris"): "Sillons Chuchotants",
     (15, "Vækirn"): "Festival des Flammes",
-    (32, "Umbraël"): "Nuit de la Lune Noire",
-    (16, "Nytheris"): "Équinox des Vents",
-    (28, "Thiloris"): "Nuit des Premiers Feux",
-    (20, "Zorvahl"): "Veillée des Ombres",
-    (32, "Elthiris"): "Nuit des Légendes",
-    (5, "Aëldrin"): "Grande Récitation"
+    (9, "Dornis"): "Cendres Joyeuses",
+    (21, "Dornis"): "Jeux de la Flamme Tournante",
+    (16, "Umbraël"): "Nuit de la Lune Noire",
+    (31, "Nytheris"): "Nuit des Légendes",
+    (8, "Varneth"): "Bal des Errants",
+    (17, "Elthiris"): "Festival des Rouleaux Volants",
+    (3, "Draknar"): "Veillée des Ombres",
+    (12, "Umbraël"): "Nuit des Mille Lueurs",
+    (18, "Umbraël"): "Fête des Échos Perdus",
+    (7, "Kaelithor"): "Grande Récitation",
+    (10, "Kaelithor"): "Jour des Fragments de Rêves",
+    (26, "Eldros"): "Chant du Dernier Souffle",
+    (26, "Eldros"): "Chant du Dernier Souffle",
 }
 
 ### 🔹 **Convertir la date IRL en date Lumharel**
@@ -137,6 +146,13 @@ async def send_calendar_message(channel):
     message_immersion = random.choice(messages_accueil)
     calendrier_formatte = generate_calendar(mois, jour_mois)
 
+    # Détection du Marché des Lunes
+    if phase_astraelis == "🌑" and phase_vorna == "🌑":
+        if festivite == "Aucune":
+            festivite = "Marché des Lunes"
+        else:
+            festivite += " & Marché des Lunes"
+
     embed = discord.Embed(
         title="📜 Calendrier du Cycle des Souffles",
         description=f"📅 **Nous sommes le {jour_mois} ({jour_semaine}) de {mois}, 1532 - Ère du Cycle Unifié**\n\n"
@@ -148,8 +164,10 @@ async def send_calendar_message(channel):
     embed.add_field(name="🎉 Festivité", value=f"**{festivite}**", inline=True)
     embed.add_field(name="🌙 Phases lunaires", value=f"Astrealis : {phase_astraelis} | Vörna : {phase_vorna}", inline=True)
     embed.add_field(name="🗓️ Mois en cours", value=f"```\n{calendrier_formatte}\n```", inline=False)
+    embed.add_field(name="🔗 Calendrier complet", value="[Voir en ligne](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)", inline=False)
 
     await channel.send(embed=embed)
+
 
 @bot.command(name="calendrier")
 async def calendrier(ctx):
