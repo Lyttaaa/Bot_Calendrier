@@ -57,7 +57,7 @@ festivites = {
     (28, "Thiloris"): "Nuit des Premiers Feux",
     (20, "Zorvahl"): "Veillée des Ombres",
     (32, "Elthiris"): "Nuit des Légendes",
-    (1, "Aëldrin"): "Grande Récitation"
+    (5, "Aëldrin"): "Grande Récitation"
 }
 
 ### 🔹 **Convertir la date IRL en date Lumharel**
