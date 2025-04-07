@@ -104,10 +104,8 @@ def get_lumharel_date():
     jour_mois = jours_ecoules + 1
     mois_nom = mois_noms[mois_index]
     jours_depuis_ref = (date_actuelle - ref_date_irl).days
-    offset_jour_semaine = ref_date_lumharel[0] - 1  # ici 6 pour le 7 Vækirn
-
-    total_jours_ecoules = jours_depuis_ref + offset_jour_semaine
-    jour_semaine = jours_complet[total_jours_ecoules % 8]
+    index_ref = 2  # ✅ car 7 Vækirn est un Vaeldris
+    jour_semaine = jours_complet[(index_ref + jours_depuis_ref) % 8]
 
     # 🔹 **Calcul des phases lunaires corrigé**
     jours_depuis_ref = (date_actuelle - ref_date_irl).days
