@@ -186,6 +186,20 @@ async def send_calendar_message(channel):
 async def calendrier(ctx):
     """ Affiche la date et le calendrier en temps réel """
     await send_calendar_message(ctx.channel)
+
+@bot.command(name="debugcalendrier")
+async def debug_calendrier(ctx):
+    """ Affiche les détails bruts de la conversion de date pour débogage """
+    mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
+    
+    await ctx.send(
+        f"📅 **DEBUG CALENDRIER**\n\n"
+        f"🗓️ Date IRL : {date_reelle.strftime('%A %d %B %Y')}\n"
+        f"📜 Date IG : {jour_mois} {mois} 1532\n"
+        f"📆 Jour de la semaine IG : {jour_semaine}\n"
+        f"🌙 Phases lunaires : Astrealis {phase_astraelis} | Vörna {phase_vorna}\n"
+        f"🎉 Festivité du jour : {festivite}"
+    )
 @bot.event
 async def on_ready():
     print(f"✅ {bot.user} est connecté et actif !")
