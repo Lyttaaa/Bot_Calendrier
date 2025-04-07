@@ -103,7 +103,8 @@ def get_lumharel_date():
 
     jour_mois = jours_ecoules + 1
     mois_nom = mois_noms[mois_index]
-    jour_semaine = jours_complet[(jour_mois - 1) % 8]  
+    total_jours_ecoules = (date_actuelle - ref_date_irl).days
+    jour_semaine = jours_complet[total_jours_ecoules % 8]
 
     # 🔹 **Calcul des phases lunaires corrigé**
     jours_depuis_ref = (date_actuelle - ref_date_irl).days
