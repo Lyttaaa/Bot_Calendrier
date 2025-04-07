@@ -127,23 +127,20 @@ def get_lumharel_date():
     return mois_nom, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite_du_jour, date_actuelle
 
 def generate_calendar(mois_nom, jour_mois):
-    calendrier = "\n\n"
-    calendrier += "   ".join([f"{abbr:^4}" for abbr in jours_abbr]) + "\n"
-    calendrier += "-" * 48 + "\n"
+    calendrier = "```diff\n"
+    calendrier += "  ".join([f"{abbr:^6}" for abbr in jours_abbr]) + "\n"
+    calendrier += "-" * 60 + "\n"
 
     nb_jours = mois_durees[mois_nom]
 
     # 🔍 Trouver l'index du jour de la semaine du 1er jour du mois
-    # En repartant depuis la date de référence
     date_actuelle = datetime.date.today()
     total_jours_irl = (date_actuelle - ref_date_irl).days
     jours_ecoules_depuis_ref = total_jours_irl + (ref_date_lumharel[0] - 1)
 
-    # Pour savoir combien de jours depuis le début du calendrier jusqu'au 1er jour du mois en cours
     jours_depuis_debut = 0
     current_index = mois_noms.index(ref_date_lumharel[1])
     current_jour = ref_date_lumharel[0] - 1
-
     jours_restants = jours_ecoules_depuis_ref
 
     while jours_restants > 0:
@@ -157,17 +154,16 @@ def generate_calendar(mois_nom, jour_mois):
             jours_depuis_debut += jours_restants
             jours_restants = 0
 
-    # Maintenant on peut calculer quel jour de la semaine est le jour 1 du mois actuel
     index_ref = 2  # Vaeldris
     premier_jour_index = (index_ref + jours_depuis_debut) % 8
 
-    ligne = "      " * premier_jour_index  # espaces vides pour aligner le 1er jour
+    ligne = "      " * premier_jour_index
 
     for i in range(1, nb_jours + 1):
         if i == jour_mois:
-            ligne += f"[{i:2}]   "
+            ligne += f"! {i:2}  ".center(6)  # orange
         else:
-            ligne += f" {i:2}    "
+            ligne += f"  {i:2}  ".center(6)
 
         if (premier_jour_index + i) % 8 == 0:
             calendrier += ligne.rstrip() + "\n"
@@ -176,6 +172,7 @@ def generate_calendar(mois_nom, jour_mois):
     if ligne:
         calendrier += ligne.rstrip() + "\n"
 
+    calendrier += "```"
     return calendrier
 
 ### 🔹 **Envoi automatique**
