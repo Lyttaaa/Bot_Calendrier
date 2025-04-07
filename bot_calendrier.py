@@ -103,10 +103,11 @@ def get_lumharel_date():
 
     jour_mois = jours_ecoules + 1
     mois_nom = mois_noms[mois_index]
+    # 🔄 Calcul du jour de la semaine basé sur le 7 Vækirn 1532 = Vaeldris = index 2
     jours_depuis_ref = (date_actuelle - ref_date_irl).days
-    index_ref = 2  # ✅ car 7 Vækirn est un Vaeldris
-    jour_semaine = jours_complet[(index_ref + jours_depuis_ref) % 8]
-
+    offset = ref_date_lumharel[0] - 1  # donc 6 jours déjà passés avant le 7e
+    jour_semaine = jours_complet[(2 + jours_depuis_ref + offset) % 8]
+ 
     # 🔹 **Calcul des phases lunaires corrigé**
     jours_depuis_ref = (date_actuelle - ref_date_irl).days
 
