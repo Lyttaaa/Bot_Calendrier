@@ -128,7 +128,7 @@ def get_lumharel_date():
 
 def generate_calendar(mois_nom, jour_mois):
     calendrier = "\n\n"
-    calendrier += "  ".join([f"{abbr:^6}" for abbr in jours_abbr]) + "\n"
+    calendrier += "".join([f"{abbr:^6}" for abbr in jours_abbr]) + "\n"
     calendrier += "-" * 60 + "\n"
 
     nb_jours = mois_durees[mois_nom]
