@@ -128,17 +128,21 @@ def get_lumharel_date():
 
 def generate_calendar(mois_nom, jour_mois):
     calendrier = "\n\n"
-    calendrier += "".join([f"{abbr:^6}" for abbr in jours_abbr]) + "\n"
-    calendrier += "-" * 60 + "\n"
+    
+    cell_width = 6
+    nb_colonnes = len(jours_abbr)
+
+    # En-tête des jours
+    calendrier += "".join([f"{abbr:^{cell_width}}" for abbr in jours_abbr]) + "\n"
+    calendrier += "-" * (cell_width * nb_colonnes) + "\n"
 
     nb_jours = mois_durees[mois_nom]
 
-    # 🔍 Trouver l'index du jour de la semaine du 1er jour du mois
+    # Calcul du jour de la semaine du 1er jour du mois
     date_actuelle = datetime.date.today()
     total_jours_irl = (date_actuelle - ref_date_irl).days
     jours_ecoules_depuis_ref = total_jours_irl + (ref_date_lumharel[0] - 1)
 
-    # Calcul du nombre de jours entre la référence et le 1er du mois actuel
     jours_depuis_debut = 0
     current_index = mois_noms.index(ref_date_lumharel[1])
     current_jour = ref_date_lumharel[0] - 1
@@ -158,13 +162,13 @@ def generate_calendar(mois_nom, jour_mois):
     index_ref = 2  # Vaeldris
     premier_jour_index = (index_ref + jours_depuis_debut) % 8
 
-    ligne = "      " * premier_jour_index  # cellules vides avant le 1er jour
+    ligne = " " * (cell_width * premier_jour_index)
 
     for i in range(1, nb_jours + 1):
         if i == jour_mois:
-            ligne += f"[{i:2}] ".center(6)
+            ligne += f"[{i:2}]".center(cell_width)
         else:
-            ligne += f" {i:2}  ".center(6)
+            ligne += f" {i:2} ".center(cell_width)
 
         if (premier_jour_index + i) % 8 == 0:
             calendrier += ligne.rstrip() + "\n"
