@@ -195,8 +195,7 @@ async def debug_calendrier(ctx):
     await ctx.send(
         f"📅 **DEBUG CALENDRIER**\n\n"
         f"🗓️ Date IRL : {date_reelle.strftime('%A %d %B %Y')}\n"
-        f"📜 Date IG : {jour_mois} {mois} 1532\n"
-        f"📆 Jour de la semaine IG : {jour_semaine}\n"
+        f"📜 Date IG : {jour_mois} {mois} ({jour_semaine}), 1532\n"
         f"🌙 Phases lunaires : Astrealis {phase_astraelis} | Vörna {phase_vorna}\n"
         f"🎉 Festivité du jour : {festivite}"
     )
