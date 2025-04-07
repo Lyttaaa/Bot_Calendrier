@@ -127,7 +127,7 @@ def get_lumharel_date():
     return mois_nom, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite_du_jour, date_actuelle
 
 def generate_calendar(mois_nom, jour_mois):
-    calendrier = "```diff\n"
+    calendrier = "\n\n"
     calendrier += "  ".join([f"{abbr:^6}" for abbr in jours_abbr]) + "\n"
     calendrier += "-" * 60 + "\n"
 
@@ -138,6 +138,7 @@ def generate_calendar(mois_nom, jour_mois):
     total_jours_irl = (date_actuelle - ref_date_irl).days
     jours_ecoules_depuis_ref = total_jours_irl + (ref_date_lumharel[0] - 1)
 
+    # Calcul du nombre de jours entre la référence et le 1er du mois actuel
     jours_depuis_debut = 0
     current_index = mois_noms.index(ref_date_lumharel[1])
     current_jour = ref_date_lumharel[0] - 1
@@ -157,13 +158,13 @@ def generate_calendar(mois_nom, jour_mois):
     index_ref = 2  # Vaeldris
     premier_jour_index = (index_ref + jours_depuis_debut) % 8
 
-    ligne = "      " * premier_jour_index
+    ligne = "      " * premier_jour_index  # cellules vides avant le 1er jour
 
     for i in range(1, nb_jours + 1):
         if i == jour_mois:
-            ligne += f"! {i:2}  ".center(6)  # orange
+            ligne += f"[{i:2}] ".center(6)
         else:
-            ligne += f"  {i:2}  ".center(6)
+            ligne += f" {i:2}  ".center(6)
 
         if (premier_jour_index + i) % 8 == 0:
             calendrier += ligne.rstrip() + "\n"
@@ -172,7 +173,6 @@ def generate_calendar(mois_nom, jour_mois):
     if ligne:
         calendrier += ligne.rstrip() + "\n"
 
-    calendrier += "```"
     return calendrier
 
 ### 🔹 **Envoi automatique**
