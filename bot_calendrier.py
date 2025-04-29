@@ -214,7 +214,7 @@ async def send_calendar_message(channel):
 
 @bot.command(name="calendrier")
 async def calendrier(ctx):
-    """ Affiche la date et le calendrier en temps réel """
+    """Affiche la date et le calendrier en temps réel"""
     await send_calendar_message(ctx.channel)
 
 @bot.command(name="debugcalendrier")
