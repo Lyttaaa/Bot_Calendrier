@@ -128,7 +128,6 @@ def get_lumharel_date():
 
 def generate_calendar(mois_nom, jour_mois):
     calendrier = "\n\n"
-    
     cell_width = 6
     nb_colonnes = len(jours_abbr)
 
@@ -160,32 +159,30 @@ def generate_calendar(mois_nom, jour_mois):
             jours_restants = 0
 
     index_ref = 2  # 12 mars 2025 = Vaeldris
-    date_actuelle = datetime.date.today()
     jours_depuis_ref = (date_actuelle - ref_date_irl).days
     jours_recul = jour_mois - 1  # On recule au 1er du mois
     premier_jour_index = (index_ref + (jours_depuis_ref - jours_recul)) % 8
 
     ligne = " " * (cell_width * premier_jour_index)
+    jour_semaine_index = premier_jour_index
 
-    ligne = " " * (cell_width * premier_jour_index)
-jour_semaine_index = premier_jour_index  # on garde la position du jour de la semaine
+    for i in range(1, nb_jours + 1):
+        if i == jour_mois:
+            ligne += f"[{i:2}]".center(cell_width)
+        else:
+            ligne += f" {i:2} ".center(cell_width)
 
-for i in range(1, nb_jours + 1):
-    if i == jour_mois:
-        ligne += f"[{i:2}]".center(cell_width)
-    else:
-        ligne += f" {i:2} ".center(cell_width)
+        jour_semaine_index = (jour_semaine_index + 1) % 8
 
-    jour_semaine_index = (jour_semaine_index + 1) % 8
+        if jour_semaine_index == 0:
+            calendrier += ligne.rstrip() + "\n"
+            ligne = ""
 
-    if jour_semaine_index == 0:
+    if ligne:
         calendrier += ligne.rstrip() + "\n"
-        ligne = ""
 
-if ligne:
-    calendrier += ligne.rstrip() + "\n"
+    return calendrier
 
-return calendrier
 
 ### 🔹 **Envoi automatique**
 @tasks.loop(seconds=60)
