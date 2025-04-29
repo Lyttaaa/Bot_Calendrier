@@ -182,10 +182,10 @@ for i in range(1, nb_jours + 1):
         calendrier += ligne.rstrip() + "\n"
         ligne = ""
 
-    if ligne:
-        calendrier += ligne.rstrip() + "\n"
+if ligne:
+    calendrier += ligne.rstrip() + "\n"
 
-    return calendrier
+return calendrier
 
 ### 🔹 **Envoi automatique**
 @tasks.loop(seconds=60)
