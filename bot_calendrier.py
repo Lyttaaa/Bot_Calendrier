@@ -217,6 +217,11 @@ async def calendrier(ctx):
     """Affiche la date et le calendrier en temps réel"""
     await send_calendar_message(ctx.channel)
 
+@bot.command(name="test")
+async def test(ctx):
+    await ctx.send("✅ Le bot a bien reçu la commande !")
+    print(f"[DEBUG] Test reçu de {ctx.author}")
+
 @bot.command(name="debugcalendrier")
 async def debug_calendrier(ctx):
     """ Affiche les détails bruts de la conversion de date pour débogage """
