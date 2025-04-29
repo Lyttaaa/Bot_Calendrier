@@ -229,17 +229,23 @@ async def debug_calendrier(ctx):
         f"🌙 Phases lunaires : Astrealis {phase_astraelis} | Vörna {phase_vorna}\n"
         f"🎉 Festivité du jour : {festivite}"
     )
+
+@tasks.loop(seconds=60)
+async def send_daily_calendar():
+    now = datetime.datetime.now()
+    if now.hour == POST_HOUR and now.minute == POST_MINUTE:
+        channel = bot.get_channel(CHANNEL_ID)
+        if channel:
+            await send_calendar_message(channel)
+            print(f"✅ [DEBUG] Calendrier envoyé automatiquement à 10h30.")
+        else:
+            print("❌ [ERROR] Channel non trouvé pour l'envoi automatique.")
+
 @bot.event
 async def on_ready():
     print(f"✅ {bot.user} est connecté et actif !")
 
-    # Vérification du channel
-    channel = bot.get_channel(CHANNEL_ID)
-    if channel:
-        print(f"📌 [DEBUG] Message automatique prévu dans : {channel.name} (ID: {CHANNEL_ID})")
-        await send_calendar_message(channel)
-        print(f"✅ [DEBUG] Calendrier envoyé automatiquement à l'ouverture.")
-    else:
-        print("❌ [ERROR] Impossible de trouver le channel. Vérifie l'ID.")
-
-    print(f"⏰ [DEBUG] L'envoi automatique est terminé.")
+    if not send_daily_calendar.is_running():
+        send_daily_calendar.start()
+    
+    print(f"⏰ [DEBUG] Boucle d'envoi automatique lancée.")
