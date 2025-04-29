@@ -254,3 +254,6 @@ async def on_ready():
         send_daily_calendar.start()
     
     print(f"⏰ [DEBUG] Boucle d'envoi automatique lancée.")
+
+if __name__ == "__main__":
+    bot.run(TOKEN)
