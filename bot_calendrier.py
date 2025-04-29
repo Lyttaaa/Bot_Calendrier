@@ -183,16 +183,6 @@ def generate_calendar(mois_nom, jour_mois):
 
     return calendrier
 
-
-### 🔹 **Envoi automatique**
-@tasks.loop(seconds=60)
-async def send_daily_calendar():
-    now = datetime.datetime.now(pytz.timezone("Europe/Paris"))
-    if now.hour == POST_HOUR and now.minute == POST_MINUTE:
-        channel = bot.get_channel(CHANNEL_ID)
-        if channel:
-            await send_calendar_message(channel)
-
 ### 🔹 **Message du calendrier**
 async def send_calendar_message(channel):
     mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
@@ -247,16 +237,9 @@ async def on_ready():
     channel = bot.get_channel(CHANNEL_ID)
     if channel:
         print(f"📌 [DEBUG] Message automatique prévu dans : {channel.name} (ID: {CHANNEL_ID})")
+        await send_calendar_message(channel)
+        print(f"✅ [DEBUG] Calendrier envoyé automatiquement à l'ouverture.")
     else:
         print("❌ [ERROR] Impossible de trouver le channel. Vérifie l'ID.")
 
-    # Vérification de l'heure d'envoi
-    print(f"⏰ [DEBUG] L'envoi automatique est prévu à {POST_HOUR:02d}:{POST_MINUTE:02d} heure locale.")
-
-    # Démarrer la tâche d'envoi automatique si elle n'est pas déjà active
-    if not send_daily_calendar.is_running():
-        send_daily_calendar.start()
-        print("⏳ [DEBUG] Envoi automatique activé.")
-    else:
-        print("⚠️ [DEBUG] La tâche d'envoi est déjà en cours.")
-bot.run(TOKEN)
+    print(f"⏰ [DEBUG] L'envoi automatique est terminé.")
