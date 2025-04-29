@@ -167,15 +167,20 @@ def generate_calendar(mois_nom, jour_mois):
 
     ligne = " " * (cell_width * premier_jour_index)
 
-    for i in range(1, nb_jours + 1):
-        if i == jour_mois:
-            ligne += f"[{i:2}]".center(cell_width)
-        else:
-            ligne += f" {i:2} ".center(cell_width)
+    ligne = " " * (cell_width * premier_jour_index)
+jour_semaine_index = premier_jour_index  # on garde la position du jour de la semaine
 
-        if (premier_jour_index + i) % 8 == 0:
-            calendrier += ligne.rstrip() + "\n"
-            ligne = ""
+for i in range(1, nb_jours + 1):
+    if i == jour_mois:
+        ligne += f"[{i:2}]".center(cell_width)
+    else:
+        ligne += f" {i:2} ".center(cell_width)
+
+    jour_semaine_index = (jour_semaine_index + 1) % 8
+
+    if jour_semaine_index == 0:
+        calendrier += ligne.rstrip() + "\n"
+        ligne = ""
 
     if ligne:
         calendrier += ligne.rstrip() + "\n"
