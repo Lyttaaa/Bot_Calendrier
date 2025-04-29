@@ -105,7 +105,7 @@ def get_lumharel_date():
     mois_nom = mois_noms[mois_index]
 
     # ✅ Corrigé : on prend tous les jours écoulés depuis 7 Vækirn
-    index_ref = 2  # Vaeldris = 7 Vækirn 1532
+    index_ref = 2  # 12 mars 2025 = Vaeldris
     delta_jours = (date_actuelle - ref_date_irl).days
     jour_semaine = jours_complet[(index_ref + delta_jours) % 8]
 
@@ -159,8 +159,11 @@ def generate_calendar(mois_nom, jour_mois):
             jours_depuis_debut += jours_restants
             jours_restants = 0
 
-    index_ref = 2  # Vaeldris
-    premier_jour_index = (index_ref + jours_depuis_debut) % 8
+    index_ref = 2  # 12 mars 2025 = Vaeldris
+    date_actuelle = datetime.date.today()
+    jours_depuis_ref = (date_actuelle - ref_date_irl).days
+    jours_recul = jour_mois - 1  # On recule au 1er du mois
+    premier_jour_index = (index_ref + (jours_depuis_ref - jours_recul)) % 8
 
     ligne = " " * (cell_width * premier_jour_index)
 
