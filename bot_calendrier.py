@@ -76,10 +76,13 @@ def get_festivite_du_jour(jour, mois):
             if (mois == start_month and jour >= start_day) or (mois == end_month and jour <= end_day):
                 return nom
     return "Aucune"
-    # Cas spécial : Marché des Lunes, seulement si les phases sont EXACTEMENT les mêmes (pas juste l'émoji)
+    # Cas spécial : Marché des Lunes, seulement si les deux lunes sont en phase exacte
     phase_1 = get_phase_lunaire("Astraelis", jour, mois)
     phase_2 = get_phase_lunaire("Vörna", jour, mois)
-    if phase_1 == phase_2:
+
+    if phase_1 == "Pleine Lune" and phase_2 == "Pleine Lune":
+        return "Marché des Lunes"
+    elif phase_1 == "Nouvelle Lune" and phase_2 == "Nouvelle Lune":
         return "Marché des Lunes"
 
     return "Aucune"
