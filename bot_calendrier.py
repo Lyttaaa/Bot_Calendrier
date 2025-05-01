@@ -69,13 +69,12 @@ festivites = [
 ]
 def get_festivite_du_jour(jour, mois):
     for (start_day, start_month), (end_day, end_month), nom in festivites:
-        if mois == start_month == end_month:
-            if start_day <= jour <= end_day:
+        if start_month == end_month:
+            if mois == start_month and start_day <= jour <= end_day:
                 return nom
-        elif mois == start_month and jour >= start_day:
-            return nom
-        elif mois == end_month and jour <= end_day:
-            return nom
+        else:
+            if (mois == start_month and jour >= start_day) or (mois == end_month and jour <= end_day):
+                return nom
     return "Aucune"
 
 ### 🔹 **Convertir la date IRL en date Lumharel**
