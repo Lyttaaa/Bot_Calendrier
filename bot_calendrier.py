@@ -76,7 +76,14 @@ def get_festivite_du_jour(jour, mois):
             if (mois == start_month and jour >= start_day) or (mois == end_month and jour <= end_day):
                 return nom
     return "Aucune"
+    # Cas spécial : Marché des Lunes, seulement si les phases sont EXACTEMENT les mêmes (pas juste l'émoji)
+    phase_1 = get_phase_lunaire("Astraelis", jour, mois)
+    phase_2 = get_phase_lunaire("Vörna", jour, mois)
+    if phase_1 == phase_2:
+        return "Marché des Lunes"
 
+    return "Aucune"
+    
 ### 🔹 **Convertir la date IRL en date Lumharel**
 def get_lumharel_date():
     """ Calcule la date en Lumharel à partir de la date IRL du 12 mars 2025 comme référence. """
