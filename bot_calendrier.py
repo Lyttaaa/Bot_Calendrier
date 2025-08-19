@@ -5,6 +5,17 @@ import datetime
 import random
 import pytz
 
+from zoneinfo import ZoneInfo
+
+# Fuseau horaire Europe/Paris pour éviter le décalage UTC de Railway
+TZ = ZoneInfo("Europe/Paris")
+
+def now_paris():
+    return datetime.datetime.now(TZ)
+
+def today_paris():
+    return now_paris().date()
+    
 # Vérification de l'heure système
 print(f"🕒 [DEBUG] Heure système Railway : {datetime.datetime.now()}")
 
@@ -75,7 +86,7 @@ def get_festivite_du_jour(jour, mois):
         else:
             if (mois == start_month and jour >= start_day) or (mois == end_month and jour <= end_day):
                 return nom
-    return "Aucune"
+
     # Cas spécial : Marché des Lunes, seulement si les deux lunes sont en phase exacte
     phase_1 = get_phase_lunaire("Astraelis", jour, mois)
     phase_2 = get_phase_lunaire("Vörna", jour, mois)
@@ -266,3 +277,4 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(TOKEN)
+
