@@ -101,7 +101,7 @@ def get_festivite_du_jour(jour, mois):
 ### 🔹 **Convertir la date IRL en date Lumharel**
 def get_lumharel_date():
     """ Calcule la date en Lumharel à partir de la date IRL du 12 mars 2025 comme référence. """
-    date_actuelle = datetime.date.today()
+    date_actuelle = today_paris()
     delta_jours = (date_actuelle - ref_date_irl).days  
 
     jours_ecoules = ref_date_lumharel[0] - 1  
@@ -158,7 +158,7 @@ def generate_calendar(mois_nom, jour_mois):
     nb_jours = mois_durees[mois_nom]
 
     # Calcul du jour de la semaine du 1er jour du mois
-    date_actuelle = datetime.date.today()
+    date_actuelle = today_paris()
     total_jours_irl = (date_actuelle - ref_date_irl).days
     jours_ecoules_depuis_ref = total_jours_irl + (ref_date_lumharel[0] - 1)
 
@@ -257,7 +257,7 @@ async def debug_calendrier(ctx):
 
 @tasks.loop(seconds=60)
 async def send_daily_calendar():
-    now = datetime.datetime.now()
+    now = now_paris()
     if now.hour == POST_HOUR and now.minute == POST_MINUTE:
         channel = bot.get_channel(CHANNEL_ID)
         if channel:
@@ -277,4 +277,5 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(TOKEN)
+
 
