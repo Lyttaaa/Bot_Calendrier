@@ -86,16 +86,6 @@ def get_festivite_du_jour(jour, mois):
         else:
             if (mois == start_month and jour >= start_day) or (mois == end_month and jour <= end_day):
                 return nom
-
-    # Cas spécial : Marché des Lunes, seulement si les deux lunes sont en phase exacte
-    phase_1 = get_phase_lunaire("Astraelis", jour, mois)
-    phase_2 = get_phase_lunaire("Vörna", jour, mois)
-
-    if phase_1 == "Pleine Lune" and phase_2 == "Pleine Lune":
-        return "Marché des Lunes"
-    elif phase_1 == "Nouvelle Lune" and phase_2 == "Nouvelle Lune":
-        return "Marché des Lunes"
-
     return "Aucune"
     
 ### 🔹 **Convertir la date IRL en date Lumharel**
@@ -129,8 +119,6 @@ def get_lumharel_date():
     delta_jours = (date_actuelle - ref_date_irl).days
     jour_semaine = jours_complet[(index_ref + delta_jours) % 8]
 
-
- 
     # 🔹 **Calcul des phases lunaires corrigé**
     jours_depuis_ref = (date_actuelle - ref_date_irl).days
 
@@ -209,8 +197,8 @@ async def send_calendar_message(channel):
     message_immersion = random.choice(messages_accueil)
     calendrier_formatte = generate_calendar(mois, jour_mois)
 
-    # Détection du Marché des Lunes
-    if phase_astraelis == "🌑" and phase_vorna == "🌑":
+        # Détection du Marché des Lunes (nouvelle OU pleine double)
+    if (phase_astraelis == "🌑" and phase_vorna == "🌑") or (phase_astraelis == "🌕" and phase_vorna == "🌕"):
         if festivite == "Aucune":
             festivite = "Marché des Lunes"
         else:
@@ -262,7 +250,7 @@ async def send_daily_calendar():
         channel = bot.get_channel(CHANNEL_ID)
         if channel:
             await send_calendar_message(channel)
-            print(f"✅ [DEBUG] Calendrier envoyé automatiquement à 10h30.")
+            print(f"✅ [DEBUG] Calendrier envoyé automatiquement à {POST_HOUR:02d}h{POST_MINUTE:02d}.")
         else:
             print("❌ [ERROR] Channel non trouvé pour l'envoi automatique.")
 
@@ -277,5 +265,6 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(TOKEN)
+
 
 
