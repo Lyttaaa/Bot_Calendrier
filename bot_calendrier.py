@@ -91,6 +91,7 @@ DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 QUESTS_CHANNEL_ID = int(os.getenv("QUESTS_CHANNEL_ID", "0"))
 ANNOUNCE_CHANNEL_ID = int(os.getenv("ANNOUNCE_CHANNEL_ID", "0"))  # optionnel
 OWNER_ID = int(os.getenv("OWNER_ID", "0"))  # Ton ID Discord, à mettre dans le .env
+GUILD_ID = int(os.getenv("GUILD_ID", "0"))  # Optionnel : ID du serveur pour synchroniser les commandes plus vite
 WEBHOOK_MESSAGER_JOURNALIER = os.getenv("WEBHOOK_MESSAGER_JOURNALIER")
 PNJ_JOURNALIER_NOM = os.getenv("PNJ_JOURNALIER_NOM", "Messager des Souffles")
 
@@ -707,8 +708,17 @@ async def on_ready():
 
     if not _commands_synced:
         try:
-            synced = await bot.tree.sync()
-            print(f"✅ Slash commands synchronisées : {[cmd.name for cmd in synced]}")
+            # Sync globale : peut prendre du temps à apparaître côté Discord.
+            synced_global = await bot.tree.sync()
+            print(f"✅ Slash commands globales synchronisées : {[cmd.name for cmd in synced_global]}")
+
+            # Sync serveur optionnelle : quasi immédiate si GUILD_ID est défini sur Railway.
+            if GUILD_ID:
+                guild = discord.Object(id=GUILD_ID)
+                bot.tree.copy_global_to(guild=guild)
+                synced_guild = await bot.tree.sync(guild=guild)
+                print(f"✅ Slash commands serveur synchronisées : {[cmd.name for cmd in synced_guild]}")
+
             _commands_synced = True
         except Exception as e:
             print(f"❌ Erreur sync slash commands : {e}")
