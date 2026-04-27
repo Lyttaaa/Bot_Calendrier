@@ -15,7 +15,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 import pytz
 
-# --- Loader quetes + index par ID ------------------------------------------
+# --- Loader quetes + index par ID -----------------------------------------
 import json
 import os
 
