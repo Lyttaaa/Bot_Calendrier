@@ -1,738 +1,270 @@
 import os
-import re
-import json
-import unicodedata
-from random import choice
-import aiohttp
-
 import discord
-from discord import app_commands
-from discord.ext import commands
-from discord.ui import View
-from pymongo import MongoClient
-
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
+from discord.ext import tasks, commands
+import datetime
+import random
 import pytz
 
-# --- Loader quetes + index par ID -----------------------------------------
-import json
-import os
+from zoneinfo import ZoneInfo
 
-# Chemin vers ton JSON (adapte si besoin)
-CHEMIN_QUETES = os.getenv("QUETES_JSON_PATH", "quetes.json")
+# Fuseau horaire Europe/Paris pour éviter le décalage UTC de Railway
+TZ = ZoneInfo("Europe/Paris")
 
-# Cache global
-QUETES_RAW = None
-QUETES_INDEX = {}   # {"QE012": {"id": "...", ...}, ...}
-CATEGORIE_PAR_ID = {}  # {"QE012": "Quêtes Énigmes", ...}
+def now_paris():
+    return datetime.datetime.now(TZ)
 
-def charger_toutes_les_quetes():
-    global QUETES_RAW, QUETES_INDEX, CATEGORIE_PAR_ID
-    if QUETES_RAW is not None:
-        return  # déjà chargé
+def today_paris():
+    return now_paris().date()
+    
+# Vérification de l'heure système
+print(f"🕒 [DEBUG] Heure système Railway : {datetime.datetime.now()}")
 
-    with open(CHEMIN_QUETES, "r", encoding="utf-8") as f:
-        QUETES_RAW = json.load(f)
+TOKEN = os.getenv("TOKEN")
+CHANNEL_ID = 1348851808549867602  
 
-    QUETES_INDEX.clear()
-    CATEGORIE_PAR_ID.clear()
+POST_HOUR = 10
+POST_MINUTE = 30
 
-    # Liste des catégories possibles selon ta structure
-    categories_possibles = [
-        "Quêtes Interactions",
-        "Quêtes Recherches",
-        "Quêtes Énigmes",
-        # si tu as aussi les "(AJOUTS)" dans un autre fichier/canvas, ajoute-les ici :
-        "Quêtes Interactions (AJOUTS)",
-        "Quêtes Recherches (AJOUTS)",
-        "Quêtes Énigmes (AJOUTS)",
-    ]
-
-    for cat in categories_possibles:
-        if cat not in QUETES_RAW:
-            continue
-        for q in QUETES_RAW[cat]:
-            qid = q.get("id", "").upper()
-            if not qid:
-                continue
-            QUETES_INDEX[qid] = q
-            # si tes ajouts portent la même nature, on “normalize” la catégorie
-            if "Interaction" in cat:
-                CATEGORIE_PAR_ID[qid] = "Quêtes Interactions"
-            elif "Recherche" in cat:
-                CATEGORIE_PAR_ID[qid] = "Quêtes Recherches"
-            elif "Énigme" in cat or "Enigme" in cat:
-                CATEGORIE_PAR_ID[qid] = "Quêtes Énigmes"
-            else:
-                CATEGORIE_PAR_ID[qid] = cat
-
-def charger_quete_par_id(quest_id: str):
-    """Retourne l'objet quête (dict) pour un ID donné, sinon None."""
-    charger_toutes_les_quetes()
-    return QUETES_INDEX.get(quest_id.upper())
-
-def categorie_par_id(quest_id: str) -> str:
-    charger_toutes_les_quetes()
-    return CATEGORIE_PAR_ID.get(quest_id.upper(), "Quête")
-
-# ======================
-#  CONFIG DISCORD & DB
-# ======================
 intents = discord.Intents.default()
 intents.message_content = True
-intents.members = True
-intents.reactions = True
-
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-MONGO_URI = os.getenv("MONGO_URI")
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-QUESTS_CHANNEL_ID = int(os.getenv("QUESTS_CHANNEL_ID", "0"))
-ANNOUNCE_CHANNEL_ID = int(os.getenv("ANNOUNCE_CHANNEL_ID", "0"))  # optionnel
-OWNER_ID = int(os.getenv("OWNER_ID", "0"))  # Ton ID Discord, à mettre dans le .env
-WEBHOOK_MESSAGER_JOURNALIER = os.getenv("WEBHOOK_MESSAGER_JOURNALIER")
-PNJ_JOURNALIER_NOM = os.getenv("PNJ_JOURNALIER_NOM", "Messager des Souffles")
+# Jours et mois de Lumharel
+jours_complet = ["Tellion", "Sildrien", "Vaeldris", "Nythariel", "Zorvael", "Luméon", "Kaelios", "Eldrith"]
+jours_abbr = ["Tel", "Sil", "Vae", "Nyt", "Zor", "Lum", "Kae", "Eld"]
 
-client = MongoClient(MONGO_URI)
-db = client.lumharel_bot
-accepted_collection = db.quetes_acceptees
-completed_collection = db.quetes_terminees
-utilisateurs = db.utilisateurs
-rotation_collection = db.rotation_quetes
-
-TZ_PARIS = pytz.timezone("Europe/Paris")
-
-# ======================
-#  CONSTANTES UI
-# ======================
-EMOJI_PAR_CATEGORIE = {
-    "Quêtes Journalières": "🕘",
-    "Quêtes Interactions": "🕹️",
-    "Quêtes Recherches": "🔍",
-    "Quêtes Énigmes": "🧩",
+mois_durees = {
+    "Orréa": 32, "Thiloris": 28, "Vækirn": 32, "Dornis": 32, "Solvannar": 32,
+    "Velkaris": 28, "Nytheris": 32, "Varneth": 28, "Elthiris": 32, "Zorvahl": 32,
+    "Draknar": 28, "Umbraël": 32, "Aëldrin": 32, "Kaelthor": 28, "Eldros": 32
 }
-COULEURS_PAR_CATEGORIE = {
-    "Quêtes Journalières": 0x4CAF50,
-    "Quêtes Interactions": 0x2196F3,
-    "Quêtes Recherches": 0x9C27B0,
-    "Quêtes Énigmes": 0xFFC107,
-}
+mois_noms = list(mois_durees.keys())
 
-# ======================
-#  UTILS
-# ======================
-def ids_quetes(liste):
-    return [q["id"] if isinstance(q, dict) else q for q in liste]
+# Phases lunaires (cycle basé sur le 12 mars 2025 comme référence)
+phases_lune = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
+cycle_astraelis = 32  
+cycle_vorna = 48  
 
-def normaliser(texte):
-    if not isinstance(texte, str):
-        return ""
-    texte = texte.lower().strip()
-    texte = unicodedata.normalize("NFKD", texte)
-    texte = "".join(c for c in texte if not unicodedata.combining(c))
-    texte = texte.replace("’", "'")
-    texte = re.sub(r'[“”«»]', '"', texte)
-    texte = re.sub(r"\s+", " ", texte)
-    texte = texte.replace("\u200b", "")
-    return texte
+# Références pour la correspondance des dates et des phases lunaires
+ref_date_irl = datetime.date(2025, 3, 12)  
+ref_date_lumharel = (7, "Vækirn", 1532)  
+ref_phase_astraelis = 4  # 🌕 Full Moon pour Astrealis le 12 mars 2025
+ref_phase_vorna = 0  # 🌑 New Moon pour Vörna le 12 mars 2025
 
-def texte_embed(valeur, fallback="Non précisé."):
-    """Convertit une valeur en texte sûr pour Discord."""
-    if valeur is None:
-        return fallback
-    texte = str(valeur).strip()
-    return texte if texte else fallback
+# Messages immersifs
+messages_accueil = [
+    "✨ Que les vents de Lumharel vous soient favorables !",
+    "🌙 Que la lumière des lunes vous guide en cette journée !",
+    "🔥 Puisse la flamme de Vaek illuminer votre chemin !",
+    "🌿 Que les murmures des anciens Façonneurs vous inspirent aujourd’hui !"
+]
 
-
-def couper_texte(texte, limite=1024):
-    """Coupe un texte en morceaux compatibles avec les champs d'embed Discord."""
-    texte = texte_embed(texte)
-    if len(texte) <= limite:
-        return [texte]
-
-    morceaux = []
-    restant = texte
-    while len(restant) > limite:
-        coupe = restant.rfind("\n", 0, limite)
-        if coupe == -1:
-            coupe = restant.rfind(" ", 0, limite)
-        if coupe == -1 or coupe < limite * 0.5:
-            coupe = limite
-        morceaux.append(restant[:coupe].strip())
-        restant = restant[coupe:].strip()
-
-    if restant:
-        morceaux.append(restant)
-    return morceaux
-
-
-def ajouter_champ_long(embed: discord.Embed, nom: str, valeur, inline=False):
-    """Ajoute un champ d'embed en le découpant si son contenu dépasse 1024 caractères."""
-    morceaux = couper_texte(valeur, 1024)
-    for i, morceau in enumerate(morceaux):
-        nom_champ = nom if i == 0 else f"{nom} (suite {i})"
-        embed.add_field(name=nom_champ[:256], value=morceau, inline=inline)
-
-def charger_quetes():
-    with open("quetes.json", "r", encoding="utf-8") as f:
-        data = json.load(f)
-    # Injecter la catégorie dans chaque quête
-    for categorie, quetes in data.items():
-        for quete in quetes:
-            quete["categorie"] = categorie
-    return data
-
-async def purger_messages_categorie(channel: discord.TextChannel, categorie: str, limit=100):
-    """
-    Supprime uniquement les anciens messages du bot qui contiennent un embed
-    dont le titre commence par l’emoji de la catégorie.
-    """
-    prefix = EMOJI_PAR_CATEGORIE.get(categorie, "")
-    async for message in channel.history(limit=limit):
-        if message.author == bot.user and message.embeds:
-            title = message.embeds[0].title or ""
-            if title.startswith(prefix):
-                try:
-                    await message.delete()
-                except:
-                    pass
-
-async def envoyer_quete(channel, quete, categorie):
-    emoji = EMOJI_PAR_CATEGORIE.get(categorie, "❓")
-    couleur = COULEURS_PAR_CATEGORIE.get(categorie, 0xCCCCCC)
-    titre = f"{emoji} {categorie}\n– {quete['id']} {quete['nom']}"
-
-    embed = discord.Embed(title=titre, description=texte_embed(quete.get("resume"), "Aucun résumé.")[:4096], color=couleur)
-    type_texte = f"{categorie} – {quete['recompense']} Lumes"
-    embed.add_field(name="📌 Type & Récompense", value=type_texte, inline=False)
-    embed.set_footer(text="Clique sur le bouton ci-dessous pour accepter la quête.")
-    await channel.send(embed=embed, view=VueAcceptation(quete, categorie))
-
-def get_quete_non_postee(categorie, quetes_possibles):
-    doc = rotation_collection.find_one({"_id": categorie})
-    deja_postees = doc["postees"] if doc else []
-    restantes = [q for q in quetes_possibles if q["id"] not in deja_postees]
-    if not restantes:
-        restantes = quetes_possibles
-        deja_postees = []
-    quete = choice(restantes)
-    rotation_collection.update_one(
-        {"_id": categorie},
-        {"$set": {"postees": deja_postees + [quete["id"]]}},
-        upsert=True
-    )
-    return quete
-
-# ======================
-#  VUE BOUTON "ACCEPTER"
-# ======================
-class VueAcceptation(View):
-    def __init__(self, quete, categorie):
-        super().__init__(timeout=None)
-        self.quete = quete
-        self.categorie = categorie
-
-    @discord.ui.button(label="Accepter 📥", style=discord.ButtonStyle.green)
-    async def accepter(self, interaction: discord.Interaction, button: discord.ui.Button):
-        user_id = str(interaction.user.id)
-        quete_id = self.quete["id"]
-
-        # déjà acceptée ?
-        quete_data = accepted_collection.find_one({"_id": user_id})
-        if quete_data and any(q.get("id") == quete_id for q in quete_data.get("quetes", [])):
-            await interaction.response.send_message(
-                "Tu as déjà accepté cette quête ! Consulte `/mes_quetes`.",
-                ephemeral=True
-            )
-            return
-
-        # déjà terminée ? (sauf journalières)
-        deja_faite = completed_collection.find_one(
-            {"_id": user_id, "quetes": {"$elemMatch": {"id": quete_id}}}
-        )
-        if deja_faite and self.categorie != "Quêtes Journalières":
-            message = (
-                f"📪 Tu as déjà terminé **{self.quete['nom']}**. "
-                "Cette quête n’est pas rejouable. Consulte `/mes_quetes`."
-            )
-            try:
-                await interaction.user.send(message)
-            except discord.Forbidden:
-                pass
-
-            # Toujours répondre à l'interaction, sinon Discord affiche “Échec de l’interaction”.
-            await interaction.response.send_message(message, ephemeral=True)
-            return
-
-        accepted_collection.update_one(
-            {"_id": user_id},
-            {"$addToSet": {
-                "quetes": {
-                    "categorie": self.categorie,
-                    "id": quete_id,
-                    "nom": self.quete["nom"]
-                }
-            }, "$set": {"pseudo": interaction.user.name}},
-            upsert=True
-        )
-
-        # MP d’instructions
-        if self.categorie == "Quêtes Énigmes":
-            embed = discord.Embed(
-                title="🧩 Quête Énigmes",
-                description=f"**{self.quete['id']} – {self.quete['nom']}**",
-                color=COULEURS_PAR_CATEGORIE.get(self.categorie, 0xCCCCCC)
-            )
-
-            img = self.quete.get("image_url")
-
-            if img:
-                # Si un rébus visuel existe, on ne montre pas l’énoncé texte
-                embed.add_field(name="💬 Rébus", value="Observe bien ce symbole...", inline=False)
-                embed.set_image(url=img)
-            else:
-                # Sinon on affiche le texte d’énigme classique
-                ajouter_champ_long(embed, "💬 Énoncé", self.quete.get("enonce", "Aucun énoncé."), inline=False)
-
-            embed.add_field(name="👉 Objectif", value="Trouve la réponse et réponds-moi ici.", inline=False)
-            embed.set_footer(text=f"🏅 Récompense : {self.quete['recompense']} Lumes")
+# Festivités fixes
+festivites = [
+    ((1, "Orréa"), (3, "Orréa"), "Solstice du Grand Réveil"),
+    ((19, "Orréa"), (19, "Orréa"), "Fête des Pattes Mouillées"),
+    ((28, "Thiloris"), (28, "Thiloris"), "Sillons Chuchotants"),
+    ((15, "Vækirn"), (17, "Vækirn"), "Festival des Flammes"),
+    ((9, "Dornis"), (9, "Dornis"), "Cendres Joyeuses"),
+    ((21, "Dornis"), (21, "Dornis"), "Jeux de la Flamme Tournante"),
+    ((16, "Umbraël"), (16, "Umbraël"), "Nuit de la Lune Noire"),
+    ((31, "Nytheris"), (1, "Varneth"), "Nuit des Légendes"),
+    ((8, "Varneth"), (8, "Varneth"), "Bal des Errants"),
+    ((17, "Elthiris"), (17, "Elthiris"), "Festival des Rouleaux Volants"),
+    ((3, "Draknar"), (6, "Draknar"), "Veillée des Ombres"),
+    ((12, "Umbraël"), (12, "Umbraël"), "Nuit des Mille Lueurs"),
+    ((18, "Umbraël"), (18, "Umbraël"), "Fête des Échos Perdus"),
+    ((7, "Kaelthor"), (10, "Kaelthor"), "Grande Récitation"),
+    ((15, "Kaelthor"), (15, "Kaelthor"), "Jour des Fragments de Rêves"),
+    ((26, "Eldros"), (26, "Eldros"), "Chant du Dernier Souffle")
+]
+def get_festivite_du_jour(jour, mois):
+    for (start_day, start_month), (end_day, end_month), nom in festivites:
+        if start_month == end_month:
+            if mois == start_month and start_day <= jour <= end_day:
+                return nom
         else:
-            titre_embed = f"{EMOJI_PAR_CATEGORIE.get(self.categorie, '📜')} {self.categorie}"
-            embed = discord.Embed(
-                title=titre_embed,
-                description=f"**{self.quete['id']} – {self.quete['nom']}**",
-                color=COULEURS_PAR_CATEGORIE.get(self.categorie, 0xCCCCCC)
-            )
-            ajouter_champ_long(embed, "💬 Description", self.quete.get("description", "Aucune description."), inline=False)
-            ajouter_champ_long(embed, "👉 Objectif", self.quete.get("details_mp", "Aucun objectif précisé."), inline=False)
-            embed.set_footer(text=f"🏅 Récompense : {self.quete['recompense']} Lumes")
+            if (mois == start_month and jour >= start_day) or (mois == end_month and jour <= end_day):
+                return nom
+    return "Aucune"
+    
+### 🔹 **Convertir la date IRL en date Lumharel**
+def get_lumharel_date():
+    """ Calcule la date en Lumharel à partir de la date IRL du 12 mars 2025 comme référence. """
+    date_actuelle = today_paris()
+    delta_jours = (date_actuelle - ref_date_irl).days  
 
-        try:
-            await interaction.user.send(embed=embed)
-            await interaction.response.send_message(
-                "Quête acceptée ✅ Regarde tes MP ! (`/mes_quetes` pour le suivi)",
-                ephemeral=True
-            )
-        except discord.Forbidden:
-            await interaction.response.send_message("Je n'arrive pas à t'envoyer de MP 😅", ephemeral=True)
+    jours_ecoules = ref_date_lumharel[0] - 1  
+    mois_nom = ref_date_lumharel[1]
+    annee = ref_date_lumharel[2]
+    mois_index = mois_noms.index(mois_nom)
 
-# ======================
-#  POSTERS
-# ======================
-async def poster_journalieres():
-    """Poste seulement les 2 quêtes journalières (tous les jours)."""
-    quetes_par_type = charger_quetes()
-    channel = bot.get_channel(QUESTS_CHANNEL_ID)
-    if not channel:
-        print("❌ Channel quêtes introuvable.")
-        return
+    while delta_jours > 0:
+        jours_restants = mois_durees[mois_noms[mois_index]] - jours_ecoules
+        if delta_jours >= jours_restants:
+            delta_jours -= jours_restants
+            mois_index = (mois_index + 1) % len(mois_noms)
+            jours_ecoules = 0
+            if mois_index == 0:
+                annee += 1  
+        else:
+            jours_ecoules += delta_jours
+            delta_jours = 0
 
-    await purger_messages_categorie(channel, "Quêtes Journalières", limit=100)
-    for quete in quetes_par_type.get("Quêtes Journalières", [])[:2]:
-        await envoyer_quete(channel, quete, "Quêtes Journalières")
+    jour_mois = jours_ecoules + 1
+    mois_nom = mois_noms[mois_index]
 
-    await envoyer_message_bonne_journee()
-    print("✅ Journalières postées.")
+    # ✅ Corrigé : on prend tous les jours écoulés depuis 7 Vækirn
+    index_ref = 2  # 12 mars 2025 = Vaeldris
+    delta_jours = (date_actuelle - ref_date_irl).days
+    jour_semaine = jours_complet[(index_ref + delta_jours) % 8]
 
-async def poster_hebdo():
-    """Poste 1 interaction + 1 recherche + 1 énigme avec rotation (chaque semaine)."""
-    quetes_par_type = charger_quetes()
-    channel = bot.get_channel(QUESTS_CHANNEL_ID)
-    if not channel:
-        print("❌ Channel quêtes introuvable.")
-        return
+    # 🔹 **Calcul des phases lunaires corrigé**
+    jours_depuis_ref = (date_actuelle - ref_date_irl).days
 
-    # Interactions
-    interactions = quetes_par_type.get("Quêtes Interactions", [])
-    if interactions:
-        await purger_messages_categorie(channel, "Quêtes Interactions", limit=100)
-        q = get_quete_non_postee("Quêtes Interactions", interactions)
-        await envoyer_quete(channel, q, "Quêtes Interactions")
+    # Astrealis (cycle de 32 jours, 8 phases de 4 jours chacune)
+    phase_astraelis_index = (ref_phase_astraelis + (jours_depuis_ref // 4)) % 8
+    phase_astraelis = phases_lune[phase_astraelis_index]
 
-    # Recherches
-    recherches = quetes_par_type.get("Quêtes Recherches", [])
-    if recherches:
-        await purger_messages_categorie(channel, "Quêtes Recherches", limit=100)
-        q = get_quete_non_postee("Quêtes Recherches", recherches)
-        await envoyer_quete(channel, q, "Quêtes Recherches")
+    # Vörna (cycle de 48 jours, 8 phases de 6 jours chacune)
+    phase_vorna_index = (ref_phase_vorna + (jours_depuis_ref // 6)) % 8
+    phase_vorna = phases_lune[phase_vorna_index]
 
-    # Énigmes
-    enigmes = quetes_par_type.get("Quêtes Énigmes", [])
-    if enigmes:
-        await purger_messages_categorie(channel, "Quêtes Énigmes", limit=100)
-        q = get_quete_non_postee("Quêtes Énigmes", enigmes)
-        await envoyer_quete(channel, q, "Quêtes Énigmes")
+    festivite_du_jour = get_festivite_du_jour(jour_mois, mois_nom)
 
-    print("✅ Hebdomadaires postées.")
+    return mois_nom, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite_du_jour, date_actuelle
 
-async def annoncer_mise_a_jour():
-    if not ANNOUNCE_CHANNEL_ID:
-        return
-    ch = bot.get_channel(ANNOUNCE_CHANNEL_ID)
-    if ch:
-        await ch.send(
-            "👋 Oyez oyez, <@&1345479226886979641> ! Les quêtes **journalières** et/ou **hebdomadaires** ont été mises à jour "
-            f"dans <#{QUESTS_CHANNEL_ID}>. Puissent les Souffles vous être favorables 🌬️ !"
-        )
+def generate_calendar(mois_nom, jour_mois):
+    calendrier = "\n\n"
+    cell_width = 6
+    nb_colonnes = len(jours_abbr)
 
+    # En-tête des jours
+    calendrier += "".join([f"{abbr:^{cell_width}}" for abbr in jours_abbr]) + "\n"
+    calendrier += "-" * (cell_width * nb_colonnes) + "\n"
 
-async def envoyer_message_bonne_journee():
-    """Envoie un message journalier via le webhook d'un PNJ."""
-    if not WEBHOOK_MESSAGER_JOURNALIER:
-        print("⚠️ WEBHOOK_MESSAGER_JOURNALIER manquant : message journalier non envoyé.")
-        return False
+    nb_jours = mois_durees[mois_nom]
 
-    messages = [
-        "🌞 Que les Souffles vous soient doux aujourd’hui, voyageurs. Les routes changent, mais les pas sincères trouvent toujours leur chemin.",
-        "🍃 Le jour se lève sur Lumharel. Prenez garde aux ombres, mais n’oubliez pas de saluer la lumière.",
-        "📜 Une nouvelle journée commence… et avec elle, de petites quêtes, de grands hasards, et quelques mystères bien cachés.",
-        "🌙 Les lunes veillent encore, même lorsque le soleil prend sa place. Avancez sans crainte, voyageurs.",
-        "✨ Oyez, âmes curieuses ! Les quêtes du jour attendent celles et ceux qui osent tendre la main au destin."
-    ]
+    # Calcul du jour de la semaine du 1er jour du mois
+    date_actuelle = today_paris()
+    total_jours_irl = (date_actuelle - ref_date_irl).days
+    jours_ecoules_depuis_ref = total_jours_irl + (ref_date_lumharel[0] - 1)
 
-    try:
-        async with aiohttp.ClientSession() as session:
-            webhook = discord.Webhook.from_url(WEBHOOK_MESSAGER_JOURNALIER, session=session)
-            await webhook.send(
-                content=choice(messages),
-                username=PNJ_JOURNALIER_NOM,
-                allowed_mentions=discord.AllowedMentions.none()
-            )
-        print("✅ Message journalier PNJ envoyé.")
-        return True
-    except Exception as e:
-        print(f"❌ Erreur lors de l'envoi du message journalier PNJ : {e}")
-        return False
+    jours_depuis_debut = 0
+    current_index = mois_noms.index(ref_date_lumharel[1])
+    current_jour = ref_date_lumharel[0] - 1
+    jours_restants = jours_ecoules_depuis_ref
 
-# ======================
-#  COMMANDES SLASH
-# ======================
-def est_lyna(interaction: discord.Interaction) -> bool:
-    """Vérifie que la commande est utilisée par la propriétaire du bot."""
-    return OWNER_ID != 0 and interaction.user.id == OWNER_ID
+    while jours_restants > 0:
+        reste_mois = mois_durees[mois_noms[current_index]] - current_jour
+        if jours_restants >= reste_mois:
+            jours_restants -= reste_mois
+            jours_depuis_debut += reste_mois
+            current_index = (current_index + 1) % len(mois_noms)
+            current_jour = 0
+        else:
+            jours_depuis_debut += jours_restants
+            jours_restants = 0
 
-async def refuser_si_pas_lyna(interaction: discord.Interaction) -> bool:
-    """Renvoie True si la commande doit être bloquée."""
-    if est_lyna(interaction):
-        return False
-    await interaction.response.send_message(
-        "⛔ Tu n’as pas accès à cette commande.",
-        ephemeral=True
-    )
-    return True
+    index_ref = 2  # 12 mars 2025 = Vaeldris
+    jours_depuis_ref = (date_actuelle - ref_date_irl).days
+    jours_recul = jour_mois - 1  # On recule au 1er du mois
+    premier_jour_index = (index_ref + (jours_depuis_ref - jours_recul)) % 8
 
-@bot.tree.command(name="poster_quetes", description="Poster toutes les quêtes journalières et hebdomadaires")
-async def poster_quetes(interaction: discord.Interaction):
-    """Poste tout d’un coup (journalières + hebdo) — réservé à Lyna."""
-    if await refuser_si_pas_lyna(interaction):
-        return
+    ligne = " " * (cell_width * premier_jour_index)
+    jour_semaine_index = premier_jour_index
 
-    await interaction.response.defer(ephemeral=True)
-    await poster_journalieres()
-    await poster_hebdo()
-    await annoncer_mise_a_jour()
-    await interaction.followup.send("✅ Quêtes postées (journalières + hebdo).", ephemeral=True)
+    for i in range(1, nb_jours + 1):
+        if i == jour_mois:
+            ligne += f"[{i:2}]".center(cell_width)
+        else:
+            ligne += f" {i:2} ".center(cell_width)
 
-@bot.tree.command(name="journaliere", description="Poster les quêtes journalières")
-async def journaliere(interaction: discord.Interaction):
-    """Poste les journalières — réservé à Lyna."""
-    if await refuser_si_pas_lyna(interaction):
-        return
+        jour_semaine_index = (jour_semaine_index + 1) % 8
 
-    await interaction.response.defer(ephemeral=True)
-    await poster_journalieres()
-    await interaction.followup.send("✅ Journalières postées.", ephemeral=True)
+        if jour_semaine_index == 0:
+            calendrier += ligne.rstrip() + "\n"
+            ligne = ""
 
-@bot.tree.command(name="hebdo", description="Poster les quêtes hebdomadaires")
-async def hebdo(interaction: discord.Interaction):
-    """Poste les hebdomadaires — réservé à Lyna."""
-    if await refuser_si_pas_lyna(interaction):
-        return
+    if ligne:
+        calendrier += ligne.rstrip() + "\n"
 
-    await interaction.response.defer(ephemeral=True)
-    await poster_hebdo()
-    await interaction.followup.send("✅ Hebdomadaires postées.", ephemeral=True)
+    return calendrier
 
+### 🔹 **Message du calendrier**
+async def send_calendar_message(channel):
+    mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
+    message_immersion = random.choice(messages_accueil)
+    calendrier_formatte = generate_calendar(mois, jour_mois)
 
-@bot.tree.command(name="message_journalier", description="Forcer l’envoi du message journalier du PNJ")
-async def message_journalier(interaction: discord.Interaction):
-    """Force l'envoi du message journalier PNJ — réservé à Lyna."""
-    if await refuser_si_pas_lyna(interaction):
-        return
-
-    await interaction.response.defer(ephemeral=True)
-    ok = await envoyer_message_bonne_journee()
-    if ok:
-        await interaction.followup.send("✅ Message journalier envoyé.", ephemeral=True)
-    else:
-        await interaction.followup.send(
-            "⚠️ Message journalier non envoyé. Vérifie la variable Railway `WEBHOOK_MESSAGER_JOURNALIER`.",
-            ephemeral=True
-        )
-
-@bot.tree.command(name="mes_quetes", description="Voir tes quêtes en cours et terminées")
-async def mes_quetes(interaction: discord.Interaction):
-    user_id = str(interaction.user.id)
-    toutes_quetes = [q for lst in charger_quetes().values() for q in lst]
-
-    user_accept = accepted_collection.find_one({"_id": user_id}) or {}
-    user_done = completed_collection.find_one({"_id": user_id}) or {}
-
-    quetes_accept = user_accept.get("quetes", [])
-    quetes_done = user_done.get("quetes", [])
-
-    ids_accept = set(q["id"] if isinstance(q, dict) else q for q in quetes_accept)
-    ids_done = set(q.get("id") if isinstance(q, dict) else q for q in quetes_done)
-
-    categories = {
-        "Quêtes Journalières": {"emoji": "🕘", "encours": [], "terminees": []},
-        "Quêtes Interactions": {"emoji": "🕹️", "encours": [], "terminees": []},
-        "Quêtes Recherches": {"emoji": "🔍", "encours": [], "terminees": []},
-        "Quêtes Énigmes": {"emoji": "🧩", "encours": [], "terminees": []},
-    }
-
-    for quete in toutes_quetes:
-        cat = quete.get("categorie")
-        if not cat or cat not in categories:
-            continue
-        ligne = f"• {quete['id']} – {quete['nom']}"
-        if quete["id"] in ids_done:
-            categories[cat]["terminees"].append(ligne)
-        elif quete["id"] in ids_accept:
-            categories[cat]["encours"].append(ligne)
+        # Détection du Marché des Lunes (nouvelle OU pleine double)
+    if (phase_astraelis == "🌑" and phase_vorna == "🌑") or (phase_astraelis == "🌕" and phase_vorna == "🌕"):
+        if festivite == "Aucune":
+            festivite = "Marché des Lunes"
+        else:
+            festivite += " & Marché des Lunes"
 
     embed = discord.Embed(
-        title=f"📘 Quêtes de {interaction.user.display_name}",
-        color=0xA86E2A
-    )
-    desc = "📜 **Quêtes en cours**\n"
-    for cat, data in categories.items():
-        desc += f"{data['emoji']} __{cat.replace('Quêtes ', '')} :__\n"
-        desc += "\n".join(data["encours"]) + "\n" if data["encours"] else "*Aucune*\n"
-
-    desc += "\n🏅 **Quêtes terminées**\n"
-    for cat, data in categories.items():
-        desc += f"{data['emoji']} __{cat.replace('Quêtes ', '')} :__\n"
-        desc += "\n".join(data["terminees"]) + "\n" if data["terminees"] else "*Aucune*\n"
-
-    embed.description = desc
-    await interaction.response.send_message(embed=embed)
-
-@bot.tree.command(name="bourse", description="Voir combien de Lumes tu possèdes")
-async def bourse(interaction: discord.Interaction):
-    user_id = str(interaction.user.id)
-    user = utilisateurs.find_one({"_id": user_id})
-    if not user:
-        utilisateurs.insert_one({
-            "_id": user_id,
-            "pseudo": interaction.user.name,
-            "lumes": 0,
-            "derniere_offrande": {},
-            "roles_temporaires": {},
-        })
-        user = utilisateurs.find_one({"_id": user_id}) or {}
-    await interaction.response.send_message(
-        f"💰 {interaction.user.mention}, tu possèdes **{user.get('lumes', 0)} Lumes**."
+        title="📜 Calendrier du Cycle des Souffles",
+        description=f"📅 **Nous sommes le {jour_mois} ({jour_semaine}) de {mois}, 1532 - Ère du Cycle Unifié**\n\n"
+                    f"📆 *Correspondance IRL : {date_reelle.strftime('%d/%m/%Y')}*\n\n"
+                    f"{message_immersion}",
+        color=0xFFD700
     )
 
-NO_MENTIONS = discord.AllowedMentions(everyone=False, users=True, roles=False, replied_user=False)
+    embed.add_field(name="🎉 Festivité", value=f"**{festivite}**", inline=True)
+    embed.add_field(name="🌙 Phases lunaires", value=f"Astrealis : {phase_astraelis} | Vörna : {phase_vorna}", inline=True)
+    embed.add_field(name="🗓️ Mois en cours", value=f"```\n{calendrier_formatte}\n```", inline=False)
+    embed.add_field(name="🔗 Calendrier complet", value="[Voir en ligne](https://app.fantasy-calendar.com/calendars/1ead959c9c963eec11424019134c7d78)", inline=False)
 
-@bot.tree.command(name="show_quete", description="Afficher l’aperçu d’une quête")
-@app_commands.describe(quest_id="ID de la quête, ex : QE012, QI019 ou QR003")
-async def show_quete(interaction: discord.Interaction, quest_id: str):
-    """Affiche une quête en aperçu — réservé à Lyna."""
-    if await refuser_si_pas_lyna(interaction):
-        return
+    await channel.send(embed=embed)
 
-    quest_id = quest_id.strip().upper()
 
-    quete = charger_quete_par_id(quest_id)
-    if not quete:
-        await interaction.response.send_message(
-            f"Je ne trouve pas la quête `{quest_id}`.",
-            ephemeral=True,
-            allowed_mentions=NO_MENTIONS
-        )
-        return
+@bot.command(name="calendrier")
+async def calendrier(ctx):
+    """Affiche la date et le calendrier en temps réel"""
+    await send_calendar_message(ctx.channel)
 
-    categorie = categorie_par_id(quest_id)
+@bot.command(name="test")
+async def test(ctx):
+    await ctx.send("✅ Le bot a bien reçu la commande !")
+    print(f"[DEBUG] Test reçu de {ctx.author}")
 
-    # --- Construction d’embed (même logique que tes DMs) ---
-    if categorie == "Quêtes Énigmes":
-        embed = discord.Embed(
-            title="🧩 Quête Énigmes (APERÇU)",
-            description=f"**{quete['id']} – {quete['nom']}**",
-            color=COULEURS_PAR_CATEGORIE.get(categorie, 0xCCCCCC)
-        )
-        img = quete.get("image_url")
-        if img:
-            embed.add_field(name="💬 Rébus", value="Observe bien ce symbole...", inline=False)
-            embed.set_image(url=img)
+@bot.command(name="debugcalendrier")
+async def debug_calendrier(ctx):
+    """ Affiche les détails bruts de la conversion de date pour débogage """
+    mois, jour_mois, jour_semaine, phase_astraelis, phase_vorna, festivite, date_reelle = get_lumharel_date()
+    
+    await ctx.send(
+        f"📅 **DEBUG CALENDRIER**\n\n"
+        f"🗓️ Date IRL : {date_reelle.strftime('%A %d %B %Y')}\n"
+        f"📜 Date IG : {jour_mois} {mois} ({jour_semaine}), 1532\n"
+        f"🌙 Phases lunaires : Astrealis {phase_astraelis} | Vörna {phase_vorna}\n"
+        f"🎉 Festivité du jour : {festivite}"
+    )
+
+@tasks.loop(seconds=60)
+async def send_daily_calendar():
+    now = now_paris()
+    if now.hour == POST_HOUR and now.minute == POST_MINUTE:
+        channel = bot.get_channel(CHANNEL_ID)
+        if channel:
+            await send_calendar_message(channel)
+            print(f"✅ [DEBUG] Calendrier envoyé automatiquement à {POST_HOUR:02d}h{POST_MINUTE:02d}.")
         else:
-            ajouter_champ_long(embed, "💬 Énoncé", quete.get("enonce", "Aucun énoncé."), inline=False)
-
-        embed.add_field(name="👉 Objectif", value="Trouve la réponse et réponds-moi ici.", inline=False)
-        embed.set_footer(text=f"🏅 Récompense : {quete['recompense']} Lumes")
-
-    elif categorie == "Quêtes Recherches":
-        embed = discord.Embed(
-            title=f"🔎 {categorie} (APERÇU)",
-            description=f"**{quete['id']} – {quete['nom']}**",
-            color=COULEURS_PAR_CATEGORIE.get(categorie, 0xCCCCCC)
-        )
-        ajouter_champ_long(embed, "💬 Indice", quete.get("description", "Aucun indice."), inline=False)
-        ajouter_champ_long(embed, "👉 Objectif", quete.get("details_mp", "Aucun objectif précisé."), inline=False)
-        embed.set_footer(text=f"🏅 Récompense : {quete['recompense']} Lumes")
-
-    else:  # Interactions / Journalières / autres catégories
-        embed = discord.Embed(
-            title=f"🤝 {categorie} (APERÇU)",
-            description=f"**{quete['id']} – {quete['nom']}**",
-            color=COULEURS_PAR_CATEGORIE.get(categorie, 0xCCCCCC)
-        )
-        ajouter_champ_long(embed, "💬 Description", quete.get("description", "Aucune description."), inline=False)
-        ajouter_champ_long(embed, "👉 Objectif", quete.get("details_mp", "Aucun objectif précisé."), inline=False)
-        embed.set_footer(text=f"🏅 Récompense : {quete['recompense']} Lumes")
-
-    await interaction.response.send_message(embed=embed, ephemeral=True, allowed_mentions=NO_MENTIONS)
-
-# ======================
-#  EVENTS: COMPLETION
-# ======================
-@bot.event
-async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
-    if payload.member is None or payload.member.bot:
-        return
-
-    user = payload.member
-    user_id = str(payload.user_id)
-    emoji = str(payload.emoji)
-
-    quetes = charger_quetes()
-    user_data = accepted_collection.find_one({"_id": user_id})
-    if not user_data:
-        return
-
-    quetes_acceptees = user_data.get("quetes", [])
-    toutes_quetes = [q for lst in quetes.values() for q in lst]
-
-    for quete in toutes_quetes:
-        if quete.get("type") != "reaction":
-            continue
-        if quete["id"] not in [q["id"] if isinstance(q, dict) else q for q in quetes_acceptees]:
-            continue
-
-        liste_emojis = quete.get("emoji", [])
-        if isinstance(liste_emojis, str):
-            liste_emojis = [liste_emojis]
-
-        if emoji in liste_emojis:
-            accepted_collection.update_one({"_id": user_id}, {"$pull": {"quetes": {"id": quete["id"]}}})
-            completed_collection.update_one(
-                {"_id": user_id},
-                {"$addToSet": {"quetes": {"id": quete["id"], "nom": quete["nom"], "categorie": quete["categorie"]}},
-                 "$set": {"pseudo": user.name}},
-                upsert=True
-            )
-            utilisateurs.update_one(
-                {"_id": user_id},
-                {"$inc": {"lumes": quete["recompense"]},
-                 "$setOnInsert": {"pseudo": user.name, "derniere_offrande": {}, "roles_temporaires": {}}},
-                upsert=True
-            )
-            try:
-                await user.send(f"✨ Tu as terminé **{quete['nom']}** et gagné **{quete['recompense']} Lumes** !")
-            except discord.Forbidden:
-                ch = bot.get_channel(payload.channel_id)
-                if ch:
-                    await ch.send(f"✅ {user.mention} a terminé **{quete['nom']}** ! (MP non reçu)")
-            return
-
-@bot.event
-async def on_message(message: discord.Message):
-    if message.author.bot:
-        return
-
-    # Réponse aux énigmes en MP
-    if isinstance(message.channel, discord.DMChannel):
-        user = message.author
-        user_id = str(user.id)
-        contenu = message.content.strip()
-
-        quetes = charger_quetes()
-        user_data = accepted_collection.find_one({"_id": user_id})
-        if not user_data:
-            return
-
-        quetes_acceptees = user_data.get("quetes", [])
-        toutes_quetes = [q for lst in quetes.values() for q in lst]
-
-        for quete in toutes_quetes:
-            if quete["id"] not in [q["id"] if isinstance(q, dict) else q for q in quetes_acceptees]:
-                continue
-
-            bonne = normaliser(quete.get("reponse_attendue", ""))
-            if normaliser(contenu) == bonne:
-                accepted_collection.update_one({"_id": user_id}, {"$pull": {"quetes": {"id": quete["id"]}}})
-                completed_collection.update_one(
-                    {"_id": user_id},
-                    {"$addToSet": {"quetes": {"id": quete["id"], "nom": quete["nom"], "categorie": quete["categorie"]}},
-                     "$set": {"pseudo": user.name}},
-                    upsert=True
-                )
-                utilisateurs.update_one(
-                    {"_id": user_id},
-                    {"$inc": {"lumes": quete["recompense"]},
-                     "$setOnInsert": {"pseudo": user.name, "derniere_offrande": {}, "roles_temporaires": {}}},
-                    upsert=True
-                )
-                await message.channel.send(
-                    f"✅ Parfait ! Tu as complété **{quete['nom']}** et gagné **{quete['recompense']} Lumes** !"
-                )
-                return
-
-    await bot.process_commands(message)
-
-# ======================
-#  SCHEDULER
-# ======================
-_scheduler = None
-_commands_synced = False
+            print("❌ [ERROR] Channel non trouvé pour l'envoi automatique.")
 
 @bot.event
 async def on_ready():
-    global _scheduler, _commands_synced
-    print(f"✅ Bot prêt : {bot.user}")
+    print(f"✅ {bot.user} est connecté et actif !")
 
-    if not _commands_synced:
-        try:
-            synced = await bot.tree.sync()
-            print(f"✅ Slash commands synchronisées : {[cmd.name for cmd in synced]}")
-            _commands_synced = True
-        except Exception as e:
-            print(f"❌ Erreur sync slash commands : {e}")
+    if not send_daily_calendar.is_running():
+        send_daily_calendar.start()
+    
+    print(f"⏰ [DEBUG] Boucle d'envoi automatique lancée.")
 
-    if _scheduler is None:
-        _scheduler = AsyncIOScheduler(timezone=TZ_PARIS)
-        # Tous les jours 10:30 → journalières
-        _scheduler.add_job(lambda: bot.loop.create_task(poster_journalieres()),
-                           CronTrigger(hour=10, minute=30))
-        # Chaque lundi 10:31 → hebdo (décalé d’1 min pour éviter concurrence)
-        _scheduler.add_job(lambda: bot.loop.create_task(poster_hebdo()),
-                           CronTrigger(day_of_week='mon', hour=10, minute=31))
-        # Annonce après chaque post hebdo
-        if ANNOUNCE_CHANNEL_ID:
-            _scheduler.add_job(lambda: bot.loop.create_task(annoncer_mise_a_jour()),
-                               CronTrigger(day_of_week='mon', hour=10, minute=32))
-
-        _scheduler.start()
-        print("⏰ Scheduler démarré (journalières quotidiennes, hebdo le lundi).")
-
-# ======================
-#  RUN
-# ======================
 if __name__ == "__main__":
-    if not DISCORD_TOKEN or not MONGO_URI or not QUESTS_CHANNEL_ID:
-        print("❌ DISCORD_TOKEN / MONGO_URI / QUESTS_CHANNEL_ID manquant(s).")
-    bot.run(DISCORD_TOKEN)
+    bot.run(TOKEN)
+
+
+
