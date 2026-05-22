@@ -206,7 +206,7 @@ async def send_calendar_message(channel):
 
     embed = discord.Embed(
         title="📜 Calendrier du Cycle des Souffles",
-        description=f"📅 **Nous sommes le {jour_mois} ({jour_semaine}) de {mois}, 1532 - Ère du Cycle Unifié**\n\n"
+        description=f"📅 **Nous sommes le {jour_mois} ({jour_semaine}) de {mois}, 1533 - Ère du Cycle Unifié**\n\n"
                     f"📆 *Correspondance IRL : {date_reelle.strftime('%d/%m/%Y')}*\n\n"
                     f"{message_immersion}",
         color=0xFFD700
